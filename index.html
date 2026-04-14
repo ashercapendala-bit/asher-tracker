@@ -257,6 +257,24 @@ function parseRepsFromLog(text){
   return null;
 }
 
+function parseSecondsFromLog(text){
+  if(!text) return null;
+  const t = text.toLowerCase().trim();
+  const seconds = t.match(/(\d+(?:\.\d+)?)\s*(s|sec|secs|second|seconds)\b/);
+  if(seconds) return parseFloat(seconds[1]);
+  const bare = t.match(/^(\d+(?:\.\d+)?)/);
+  if(bare) return parseFloat(bare[1]);
+  return null;
+}
+
+function parseDistanceKmFromLog(text){
+  if(!text) return null;
+  const t = text.toLowerCase().trim();
+  const km = t.match(/(\d+(?:\.\d+)?)\s*km\b/);
+  if(km) return parseFloat(km[1]);
+  return null;
+}
+
 function getLoggedMetricForWeek(week, dayId, exerciseSlug){
   // Returns the best (max) reps logged for a given exercise this week, or null
   const key = `w${week}-${dayId}-${exerciseSlug}`;
@@ -268,6 +286,37 @@ function getLoggedMetricForWeek(week, dayId, exerciseSlug){
   // If failed is filled but done is blank, something went wrong → treat as 0
   if(log.failed && !log.done) return 0;
   return null;
+}
+
+function getWorkoutMetricValue(week, metricKey){
+  const metricLogs = {
+    chinups: [{dayId:"pull", slug:"chin-up-underhand", parser:parseRepsFromLog, zeroOnFailure:true}],
+    pushups: [{dayId:"push", slug:"flat-push-up", parser:parseRepsFromLog, zeroOnFailure:true}],
+    deadHang: [{dayId:"pull", slug:"dead-hang", parser:parseSecondsFromLog, zeroOnFailure:false}],
+    dips: [{dayId:"push", slug:"tricep-dips-chair", parser:parseRepsFromLog, zeroOnFailure:true}],
+    runKm: [
+      {dayId:"run_wed", slug:"wednesday-run", parser:parseDistanceKmFromLog, zeroOnFailure:false},
+      {dayId:"run_sat", slug:"saturday-run", parser:parseDistanceKmFromLog, zeroOnFailure:false},
+    ],
+  };
+  const defs = metricLogs[metricKey];
+  if(!defs) return null;
+
+  let best = null;
+  defs.forEach(function(def){
+    const key = `w${week}-${def.dayId}-${def.slug}`;
+    const log = state.workoutLogs[key];
+    if(!log) return;
+    const parsed = def.parser(log.done);
+    if(parsed !== null && !Number.isNaN(parsed)){
+      best = best===null ? parsed : Math.max(best, parsed);
+      return;
+    }
+    if(def.zeroOnFailure && log.failed && !log.done){
+      best = best===null ? 0 : Math.max(best, 0);
+    }
+  });
+  return best;
 }
 
 // ── Adaptive plan engine ──────────────────────────────────────────────────
@@ -533,14 +582,20 @@ function createTrackedExerciseCard(ex, accent, week, dayId){
 
 function getLatestMetric(key){
   for(let i=WEEKS.length;i>=1;i--){
-    const value=state.entries[i]?.[key];
-    if(value!==undefined && value!=="") return value;
+    const entryValue=state.entries[i]?.[key];
+    const workoutValue=getWorkoutMetricValue(i, key);
+    if(workoutValue!==null) return workoutValue;
+    if(entryValue!==undefined && entryValue!=="") return entryValue;
   }
   return null;
 }
 
 function getBestMetric(key){
-  const values=WEEKS.map(function(w){ return parseFloat(state.entries[w.week]?.[key]); }).filter(function(v){ return !Number.isNaN(v); });
+  const values=WEEKS.map(function(w){
+    const workoutValue=getWorkoutMetricValue(w.week, key);
+    if(workoutValue!==null) return workoutValue;
+    return parseFloat(state.entries[w.week]?.[key]);
+  }).filter(function(v){ return !Number.isNaN(v); });
   if(!values.length) return null;
   return Math.max.apply(null, values);
 }
@@ -1089,19 +1144,29 @@ function renderProgress(){
   const history=h("div",{class:"history-list"});
   WEEKS.forEach(function(w){
     const entry=state.entries[w.week] || {};
-    if(!entry.weight && !entry.chinups && !entry.pushups && !entry.deadHang && !entry.dips && !entry.runKm) return;
+    const chinups=getWorkoutMetricValue(w.week,"chinups");
+    const pushups=getWorkoutMetricValue(w.week,"pushups");
+    const deadHang=getWorkoutMetricValue(w.week,"deadHang");
+    const dips=getWorkoutMetricValue(w.week,"dips");
+    const runKm=getWorkoutMetricValue(w.week,"runKm");
+    const weekChinups=chinups!==null ? chinups : entry.chinups;
+    const weekPushups=pushups!==null ? pushups : entry.pushups;
+    const weekDeadHang=deadHang!==null ? deadHang : entry.deadHang;
+    const weekDips=dips!==null ? dips : entry.dips;
+    const weekRunKm=runKm!==null ? runKm : entry.runKm;
+    if(!entry.weight && !weekChinups && !weekPushups && !weekDeadHang && !weekDips && !weekRunKm) return;
     history.appendChild(h("div",{class:"history-card"},[
       h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}},[
         h("div",{style:{fontSize:"13px",fontWeight:"800"}},`Week ${w.week}`),
         h("div",{style:{fontSize:"10px",color:"#666",fontFamily:"DM Mono,monospace"}},w.date),
       ]),
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}},[
-        h("div",{},[h("div",{class:"stat-label"},"Chin-ups"),h("div",{class:"history-value",style:{color:"#1a6be8"}},entry.chinups||"-")]),
-        h("div",{},[h("div",{class:"stat-label"},"Push-ups"),h("div",{class:"history-value",style:{color:"#e8531a"}},entry.pushups||"-")]),
-        h("div",{},[h("div",{class:"stat-label"},"Dead hang"),h("div",{class:"history-value",style:{color:"#1ab873"}},entry.deadHang?`${entry.deadHang}s`:"-")]),
-        h("div",{},[h("div",{class:"stat-label"},"Dips"),h("div",{class:"history-value",style:{color:"#d4a017"}},entry.dips||"-")]),
-        h("div",{},[h("div",{class:"stat-label"},"Comfortable run"),h("div",{class:"history-value",style:{color:"#4ba3ff"}},entry.runKm?`${entry.runKm} km`:"-")]),
-        h("div",{},[h("div",{class:"stat-label"},"Run pace"),h("div",{class:"history-value",style:{color:"#888"}},entry.runKm&&entry.runMin?`${(parseFloat(entry.runMin)/parseFloat(entry.runKm)).toFixed(1)} min/km`:"-")]),
+        h("div",{},[h("div",{class:"stat-label"},"Chin-ups"),h("div",{class:"history-value",style:{color:"#1a6be8"}},weekChinups ?? "-")]),
+        h("div",{},[h("div",{class:"stat-label"},"Push-ups"),h("div",{class:"history-value",style:{color:"#e8531a"}},weekPushups ?? "-")]),
+        h("div",{},[h("div",{class:"stat-label"},"Dead hang"),h("div",{class:"history-value",style:{color:"#1ab873"}},weekDeadHang!=null?`${weekDeadHang}s`:"-")]),
+        h("div",{},[h("div",{class:"stat-label"},"Dips"),h("div",{class:"history-value",style:{color:"#d4a017"}},weekDips ?? "-")]),
+        h("div",{},[h("div",{class:"stat-label"},"Comfortable run"),h("div",{class:"history-value",style:{color:"#4ba3ff"}},weekRunKm!=null?`${weekRunKm} km`:"-")]),
+        h("div",{},[h("div",{class:"stat-label"},"Run pace"),h("div",{class:"history-value",style:{color:"#888"}},weekRunKm&&entry.runMin?`${(parseFloat(entry.runMin)/parseFloat(weekRunKm)).toFixed(1)} min/km`:"-")]),
       ]),
     ]));
   });
@@ -1178,13 +1243,13 @@ function renderNutrition(){
   ]));
   const waterControls=h("div",{style:{display:"flex",gap:"8px",marginBottom:"16px"}});
   waterControls.appendChild(h("button",{class:"btn-ghost",onClick:()=>{
-    entry.waterMl=Math.max(0,(parseInt(entry.waterMl,10)||0)-250);
+    entry.waterMl=Math.max(0,(parseInt(entry.waterMl,10)||0)-100);
     saveNutrition(); render();
-  }},"-250 ml"));
+  }},"-100 ml"));
   waterControls.appendChild(h("button",{class:"btn-ghost",onClick:()=>{
-    entry.waterMl=(parseInt(entry.waterMl,10)||0)+250;
+    entry.waterMl=(parseInt(entry.waterMl,10)||0)+100;
     saveNutrition(); render();
-  }},"+250 ml"));
+  }},"+100 ml"));
   el.appendChild(waterControls);
 
   // Per-meal logging
