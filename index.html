@@ -205,24 +205,28 @@ function loadNutrition(){
   return store.get("nutrition_v1") || {};
 }
 
+function loadDailyWeights(){
+  return store.get("daily_weights_v1") || {};
+}
+
 function defaultShoppingItems(){
   return [
-    {id:"shop-1", text:"Oats", store:"Aldi", done:false},
-    {id:"shop-2", text:"Milk", store:"Aldi", done:false},
-    {id:"shop-3", text:"Greek yoghurt", store:"Aldi", done:false},
-    {id:"shop-4", text:"Bananas", store:"Aldi", done:false},
-    {id:"shop-5", text:"Stevia", store:"Woolworths", done:false},
-    {id:"shop-6", text:"Cinnamon", store:"Aldi", done:false},
-    {id:"shop-7", text:"Chicken thigh", store:"Aldi", done:false},
-    {id:"shop-8", text:"Rice", store:"Aldi", done:false},
-    {id:"shop-9", text:"Frozen vegetables", store:"Aldi", done:false},
-    {id:"shop-10", text:"Soy sauce", store:"Woolworths", done:false},
-    {id:"shop-11", text:"Cottage cheese", store:"Aldi", done:false},
-    {id:"shop-12", text:"Chocolate flavor mix", store:"Woolworths", done:false},
-    {id:"shop-13", text:"Strawberries", store:"Woolworths", done:false},
-    {id:"shop-14", text:"Vanilla", store:"Woolworths", done:false},
-    {id:"shop-15", text:"Potatoes", store:"Aldi", done:false},
-    {id:"shop-16", text:"Hot sauce", store:"Woolworths", done:false},
+    {id:"shop-1", text:"Oats", quantity:"1 x 1kg bag", store:"Aldi", done:false},
+    {id:"shop-2", text:"Milk", quantity:"3 x 2L bottles", store:"Aldi", done:false},
+    {id:"shop-3", text:"Greek yoghurt", quantity:"2 x 1kg tubs", store:"Aldi", done:false},
+    {id:"shop-4", text:"Bananas", quantity:"10 bananas", store:"Aldi", done:false},
+    {id:"shop-5", text:"Stevia", quantity:"1 bottle", store:"Woolworths", done:false},
+    {id:"shop-6", text:"Cinnamon", quantity:"1 jar", store:"Aldi", done:false},
+    {id:"shop-7", text:"Chicken thigh", quantity:"2.5 kg", store:"Aldi", done:false},
+    {id:"shop-8", text:"Rice", quantity:"1 x 1kg bag", store:"Aldi", done:false},
+    {id:"shop-9", text:"Frozen vegetables", quantity:"4 x 1kg bags", store:"Aldi", done:false},
+    {id:"shop-10", text:"Soy sauce", quantity:"1 bottle", store:"Woolworths", done:false},
+    {id:"shop-11", text:"Cottage cheese", quantity:"7 tubs", store:"Aldi", done:false},
+    {id:"shop-12", text:"Chocolate flavor mix", quantity:"1 tub", store:"Woolworths", done:false},
+    {id:"shop-13", text:"Strawberries", quantity:"2 bags frozen", store:"Woolworths", done:false},
+    {id:"shop-14", text:"Vanilla", quantity:"1 bottle", store:"Woolworths", done:false},
+    {id:"shop-15", text:"Potatoes", quantity:"2 kg", store:"Aldi", done:false},
+    {id:"shop-16", text:"Hot sauce", quantity:"1 bottle", store:"Woolworths", done:false},
   ];
 }
 
@@ -234,11 +238,12 @@ function loadShopping(){
     saved.forEach(function(item){
       const match = defaults.find(function(def){ return def.text.toLowerCase() === (item.text || "").toLowerCase(); });
       if(match && !item.store) item.store = match.store;
+      if(match && !item.quantity) item.quantity = match.quantity;
     });
     defaults.forEach(function(item){
       if(!existingTexts.has(item.text.toLowerCase())) saved.push(item);
     });
-    return saved;
+    return saved.filter(function(item){ return !item.done; }).concat(saved.filter(function(item){ return item.done; }));
   }
   return defaultShoppingItems();
 }
@@ -525,8 +530,10 @@ let state = {
   activeWeek: 1,
   activeDay: "push",
   entries: loadEntries(),
+  dailyWeights: loadDailyWeights(),
   nutrition: loadNutrition(),
   selectedDate: getTodayKey(),
+  selectedWeightDate: getTodayKey(),
   shopping: loadShopping(),
   workoutLogs: loadWorkoutLogs(),
   saveTimer: null,
@@ -540,12 +547,30 @@ function saveNutrition(){
   store.set("nutrition_v1", state.nutrition);
 }
 
+function saveDailyWeights(){
+  store.set("daily_weights_v1", state.dailyWeights);
+}
+
 function saveShopping(){
   store.set("shopping_v1", state.shopping);
 }
 
 function saveWorkoutLogs(){
   store.set("workout_logs_v1", state.workoutLogs);
+}
+
+function reorderShoppingItems(itemId, done){
+  const idx = state.shopping.findIndex(function(item){ return item.id === itemId; });
+  if(idx === -1) return;
+  const item = state.shopping.splice(idx,1)[0];
+  item.done = done;
+  if(done){
+    state.shopping.push(item);
+    return;
+  }
+  const firstDone = state.shopping.findIndex(function(entry){ return entry.done; });
+  if(firstDone === -1) state.shopping.push(item);
+  else state.shopping.splice(firstDone,0,item);
 }
 
 function getNutritionEntry(dateKey){
@@ -754,6 +779,70 @@ function buildPaceChart(paceData){
     paceData.forEach(function(d){ctx.fillText(d.pace.toFixed(1),pad.left-4,toY(d.pace)+3);});
   };
   return paceWrap;
+}
+
+function buildDailyWeightChart(dailyWeights){
+  const points = Object.keys(dailyWeights).sort().map(function(date){
+    const weight = parseFloat(dailyWeights[date]);
+    return Number.isNaN(weight) ? null : {date:date, weight:weight};
+  }).filter(Boolean);
+
+  const wrap=h("div",{class:"chart-wrap"});
+  wrap.appendChild(h("div",{style:{textAlign:"center",fontFamily:"DM Mono,monospace",fontSize:"9px",color:"#444",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:"10px",paddingLeft:"10px"}},"Daily Weight Trend"));
+
+  if(points.length < 2){
+    wrap.appendChild(h("div",{style:{fontSize:"12px",color:"#777",textAlign:"center",padding:"28px 12px 22px",lineHeight:"1.5"}},"Add at least two daily weigh-ins to see the graph."));
+    return wrap;
+  }
+
+  const canvas=h("canvas",{style:{display:"block",width:"100%",height:"180px"}});
+  wrap.appendChild(canvas);
+  wrap._drawFn = function(){
+    const dpr=window.devicePixelRatio||1;
+    const parent=canvas.parentElement;
+    const W=(parent&&parent.offsetWidth>50)?parent.offsetWidth:Math.min(window.innerWidth-40,440);
+    const H=180;
+    canvas.width=W*dpr; canvas.height=H*dpr;
+    canvas.style.width=W+"px"; canvas.style.height=H+"px";
+    const ctx=canvas.getContext("2d");
+    if(!ctx) return;
+    ctx.scale(dpr,dpr);
+    const pad={top:10,right:18,bottom:34,left:36};
+    const cw=W-pad.left-pad.right, ch=H-pad.top-pad.bottom;
+    const weights=points.map(function(p){ return p.weight; });
+    const minY=Math.min.apply(null,weights)-0.4;
+    const maxY=Math.max.apply(null,weights)+0.4;
+    const range=Math.max(0.8,maxY-minY);
+    const toX=function(i){ return pad.left + (i/Math.max(1,points.length-1))*cw; };
+    const toY=function(v){ return pad.top + ch - ((v-minY)/range)*ch; };
+
+    ctx.strokeStyle="#1e1e1e"; ctx.lineWidth=1;
+    [0.25,0.5,0.75].forEach(function(step){
+      const y=pad.top+ch*step;
+      ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+cw,y); ctx.stroke();
+    });
+
+    ctx.strokeStyle="#e8531a"; ctx.lineWidth=2.5;
+    ctx.beginPath();
+    points.forEach(function(point,i){ i===0 ? ctx.moveTo(toX(i),toY(point.weight)) : ctx.lineTo(toX(i),toY(point.weight)); });
+    ctx.stroke();
+
+    points.forEach(function(point,i){
+      ctx.fillStyle="#e8531a";
+      ctx.beginPath(); ctx.arc(toX(i),toY(point.weight),3.5,0,Math.PI*2); ctx.fill();
+    });
+
+    ctx.fillStyle="#555"; ctx.font="9px DM Mono,monospace"; ctx.textAlign="center";
+    points.forEach(function(point,i){
+      const label=point.date.slice(5);
+      ctx.fillText(label,toX(i),H-6);
+    });
+    ctx.textAlign="right";
+    [minY, (minY+maxY)/2, maxY].forEach(function(v){
+      ctx.fillText(v.toFixed(1),pad.left-4,toY(v)+3);
+    });
+  };
+  return wrap;
 }
 
 // ── TABS ──────────────────────────────────────────────────────────────────
@@ -1092,8 +1181,38 @@ function renderProgress(){
     .forEach(s=>stats.appendChild(h("div",{class:"stat-card"},[
       h("div",{class:"stat-value",style:{color:s.c}},s.v),
       h("div",{class:"stat-label"},s.l),
-    ])));
+  ])));
   el.appendChild(stats);
+
+  const dailyWeightValue = state.dailyWeights[state.selectedWeightDate] || "";
+  const latestDailyWeightDate = Object.keys(state.dailyWeights).sort().slice(-1)[0] || null;
+  const latestDailyWeight = latestDailyWeightDate ? state.dailyWeights[latestDailyWeightDate] : null;
+
+  el.appendChild(sectionLabel("Daily weight"));
+  const dailyWeightRow=h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px",marginBottom:"8px"}});
+  const dailyDateInput=h("input",{class:"input",type:"date",value:state.selectedWeightDate});
+  dailyDateInput.addEventListener("input",function(ev){
+    state.selectedWeightDate = ev.target.value || getTodayKey();
+    render();
+  });
+  const dailyWeightInput=h("input",{class:"input",type:"number",placeholder:"e.g. 80.9",value:dailyWeightValue});
+  dailyWeightInput.addEventListener("input",function(ev){
+    const value = ev.target.value;
+    if(value === "") delete state.dailyWeights[state.selectedWeightDate];
+    else state.dailyWeights[state.selectedWeightDate] = value;
+    saveDailyWeights();
+    render();
+  });
+  dailyWeightRow.appendChild(h("div",{},[
+    h("div",{class:"input-label"},["Date"]),
+    dailyDateInput,
+  ]));
+  dailyWeightRow.appendChild(h("div",{},[
+    h("div",{class:"input-label"},["Weight", latestDailyWeight ? h("span",{style:{color:"#444",fontSize:"10px"}},`Latest: ${latestDailyWeight}kg`) : null]),
+    dailyWeightInput,
+  ]));
+  el.appendChild(dailyWeightRow);
+  el.appendChild(buildDailyWeightChart(state.dailyWeights));
 
   el.appendChild(h("div",{style:{marginBottom:"14px"}},[
     h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:"5px"}},[
@@ -1337,7 +1456,7 @@ function renderShopping(){
   const addItem=function(){
     const text=(input.value||"").trim();
     if(!text) return;
-    state.shopping.unshift({id:`shop-${Date.now()}`,text:text,store:"Woolworths",done:false});
+    state.shopping.unshift({id:`shop-${Date.now()}`,text:text,quantity:"1",store:"Woolworths",done:false});
     input.value="";
     saveShopping();
     render();
@@ -1368,22 +1487,23 @@ function renderShopping(){
 
   el.appendChild(card("#d4a017",[
     h("div",{style:{fontSize:"13px",fontWeight:"700",color:"#d4a017",marginBottom:"3px"}},`${doneCount}/${state.shopping.length} picked up`),
-    h("div",{style:{fontSize:"12px",color:"#999",lineHeight:"1.5"}},"Tap an item to mark it done. Each ingredient shows the suggested store: Aldi or Woolworths."),
+    h("div",{style:{fontSize:"12px",color:"#999",lineHeight:"1.5"}},"Tap an item to mark it done. Each ingredient now shows quantity and suggested store."),
   ]));
 
   state.shopping.forEach(item=>{
     el.appendChild(h("div",{class:`shopping-item${item.done?" done":""}`},[
       h("button",{class:"shopping-check",onClick:()=>{
-        item.done=!item.done;
+        reorderShoppingItems(item.id,!item.done);
         saveShopping();
         render();
       }},item.done?"✓":""),
       h("button",{style:{flex:"1",textAlign:"left",background:"none",border:"none",color:"inherit"},onClick:()=>{
-        item.done=!item.done;
+        reorderShoppingItems(item.id,!item.done);
         saveShopping();
         render();
       }},[
         h("div",{class:"shopping-text",style:{fontSize:"14px",fontWeight:"700",color:"#f0f0f0",marginBottom:"2px"}},item.text),
+        h("div",{style:{fontSize:"11px",color:"#999",marginBottom:"4px"}},item.quantity || "1"),
         h("div",{style:{marginBottom:"4px"}},[
           h("span",{class:"store-badge"},item.store || "Woolworths")
         ]),
