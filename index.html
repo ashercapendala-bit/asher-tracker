@@ -845,6 +845,75 @@ function buildDailyWeightChart(dailyWeights){
   return wrap;
 }
 
+function buildMetricChart(title, points, color, suffix, helpText){
+  const wrap=h("div",{class:"chart-wrap"});
+  wrap.appendChild(h("div",{style:{textAlign:"center",fontFamily:"DM Mono,monospace",fontSize:"9px",color:"#444",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:"10px",paddingLeft:"10px"}},title));
+
+  if(points.length < 2){
+    wrap.appendChild(h("div",{style:{fontSize:"12px",color:"#777",textAlign:"center",padding:"24px 12px 18px",lineHeight:"1.5"}},helpText || "Add at least two entries to see the graph."));
+    return wrap;
+  }
+
+  const canvas=h("canvas",{style:{display:"block",width:"100%",height:"170px"}});
+  wrap.appendChild(canvas);
+  wrap._drawFn = function(){
+    const dpr=window.devicePixelRatio||1;
+    const parent=canvas.parentElement;
+    const W=(parent&&parent.offsetWidth>50)?parent.offsetWidth:Math.min(window.innerWidth-40,440);
+    const H=170;
+    canvas.width=W*dpr; canvas.height=H*dpr;
+    canvas.style.width=W+"px"; canvas.style.height=H+"px";
+    const ctx=canvas.getContext("2d");
+    if(!ctx) return;
+    ctx.scale(dpr,dpr);
+    const pad={top:10,right:18,bottom:30,left:38};
+    const cw=W-pad.left-pad.right, ch=H-pad.top-pad.bottom;
+    const values=points.map(function(p){ return p.value; });
+    const minY=Math.min.apply(null,values);
+    const maxY=Math.max.apply(null,values);
+    const range=Math.max(1,(maxY-minY)||1);
+    const paddedMin=minY - range*0.15;
+    const paddedMax=maxY + range*0.15;
+    const safeRange=Math.max(1,(paddedMax-paddedMin));
+    const toX=function(i){ return pad.left + (i/Math.max(1,points.length-1))*cw; };
+    const toY=function(v){ return pad.top + ch - ((v-paddedMin)/safeRange)*ch; };
+
+    ctx.strokeStyle="#1e1e1e"; ctx.lineWidth=1;
+    [0.25,0.5,0.75].forEach(function(step){
+      const y=pad.top+ch*step;
+      ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(pad.left+cw,y); ctx.stroke();
+    });
+
+    ctx.strokeStyle=color; ctx.lineWidth=2.5;
+    ctx.beginPath();
+    points.forEach(function(point,i){ i===0 ? ctx.moveTo(toX(i),toY(point.value)) : ctx.lineTo(toX(i),toY(point.value)); });
+    ctx.stroke();
+
+    points.forEach(function(point,i){
+      ctx.fillStyle=color;
+      ctx.beginPath(); ctx.arc(toX(i),toY(point.value),3.5,0,Math.PI*2); ctx.fill();
+    });
+
+    ctx.fillStyle="#555"; ctx.font="9px DM Mono,monospace"; ctx.textAlign="center";
+    points.forEach(function(point,i){ ctx.fillText(point.label,toX(i),H-6); });
+    ctx.textAlign="right";
+    [paddedMin,(paddedMin+paddedMax)/2,paddedMax].forEach(function(v){
+      const display = Math.abs(v) < 10 ? v.toFixed(1) : Math.round(v).toString();
+      ctx.fillText(display + (suffix || ""),pad.left-4,toY(v)+3);
+    });
+  };
+  return wrap;
+}
+
+function getWeeklySeries(metricKey, labelFormatter){
+  return WEEKS.map(function(w){
+    const workoutValue=getWorkoutMetricValue(w.week, metricKey);
+    const raw = workoutValue!==null ? workoutValue : parseFloat(state.entries[w.week]?.[metricKey]);
+    if(Number.isNaN(raw)) return null;
+    return { label: labelFormatter ? labelFormatter(w) : `W${w.week}`, value: raw };
+  }).filter(Boolean);
+}
+
 // ── TABS ──────────────────────────────────────────────────────────────────
 function renderToday(){
   const el=h("div",{style:{padding:"0 14px"}});
@@ -1121,7 +1190,8 @@ function renderLog(){
       state.entries[state.activeWeek][f.key]=ev.target.value;
       if(state.saveTimer) clearTimeout(state.saveTimer);
       state.saveTimer=setTimeout(()=>saveEntries(),600);
-      // Live pace update
+    });
+    inp.addEventListener("change",()=>{
       if(f.key==="runKm"||f.key==="runMin") render();
     });
     el.appendChild(inputField(f.label,f.hint,inp));
@@ -1163,9 +1233,9 @@ function renderLog(){
 function renderProgress(){
   const el=h("div",{style:{padding:"0 14px"}});
   el.appendChild(h("div",{style:{padding:"16px 0 12px"}},[
-    h("div",{style:{fontFamily:"DM Mono,monospace",fontSize:"9px",color:"#1ab873",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:"4px"}},"Charts & Stats"),
-    h("div",{style:{fontSize:"22px",fontWeight:"800",lineHeight:"1.1"}},"Progress"),
-    h("div",{style:{fontSize:"22px",fontWeight:"800",color:"#1ab873",lineHeight:"1.1",marginBottom:"12px"}},"Overview"),
+    h("div",{style:{fontFamily:"DM Mono,monospace",fontSize:"9px",color:"#1ab873",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:"4px"}},"Analytics"),
+    h("div",{style:{fontSize:"22px",fontWeight:"800",lineHeight:"1.1"}},"Stats"),
+    h("div",{style:{fontSize:"22px",fontWeight:"800",color:"#1ab873",lineHeight:"1.1",marginBottom:"12px"}},"Dashboard"),
   ]));
 
   // Stats
@@ -1201,6 +1271,8 @@ function renderProgress(){
     if(value === "") delete state.dailyWeights[state.selectedWeightDate];
     else state.dailyWeights[state.selectedWeightDate] = value;
     saveDailyWeights();
+  });
+  dailyWeightInput.addEventListener("change",function(){
     render();
   });
   dailyWeightRow.appendChild(h("div",{},[
@@ -1212,8 +1284,6 @@ function renderProgress(){
     dailyWeightInput,
   ]));
   el.appendChild(dailyWeightRow);
-  el.appendChild(buildDailyWeightChart(state.dailyWeights));
-
   el.appendChild(h("div",{style:{marginBottom:"14px"}},[
     h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:"5px"}},[
       h("span",{style:{fontSize:"11px",color:"#555"}},["Lost: ",h("span",{style:{color:lost>0?"#1ab873":"#555"}},lost>0?`-${lost}kg`:"0kg")]),
@@ -1225,9 +1295,11 @@ function renderProgress(){
     h("div",{style:{textAlign:"right",marginTop:"4px",fontFamily:"DM Mono,monospace",fontSize:"10px",color:pct>0?"#e8531a":"#333"}},`${pct}% to goal`),
   ]));
 
+  el.appendChild(sectionLabel("Bodyweight charts"));
+  el.appendChild(buildDailyWeightChart(state.dailyWeights));
   el.appendChild(buildChart(state.entries));
 
-  // Pace chart
+  el.appendChild(sectionLabel("Running charts"));
   const paceData=WEEKS.map(w=>{
     const e=state.entries[w.week];
     if(e?.runKm&&e?.runMin&&parseFloat(e.runKm)>0){
@@ -1236,15 +1308,12 @@ function renderProgress(){
     return {week:w.week,pace:null};
   }).filter(d=>d.pace!==null);
 
-  if(paceData.length>1){
-    el.appendChild(h("div",{style:{marginTop:"14px"}}));
-    el.appendChild(sectionLabel("Run pace trend (min/km — lower is faster)"));
-    el.appendChild(buildPaceChart(paceData));
-  }
+  el.appendChild(buildPaceChart(paceData));
+  el.appendChild(buildMetricChart("Comfortable Run Distance", getWeeklySeries("runKm"), "#4ba3ff", "km", "Log run distance in the weekly log or workout tracker to see this graph."));
+  el.appendChild(buildMetricChart("Run Duration", getWeeklySeries("runMin"), "#d4a017", "m", "Log run duration each week to see this graph."));
+  el.appendChild(buildMetricChart("Run Effort", getWeeklySeries("runEffort"), "#e85555", "", "Log weekly run effort to see how hard sessions are feeling."));
 
-  // Linked log metrics
-  el.appendChild(h("div",{style:{marginTop:"14px"}}));
-  el.appendChild(sectionLabel("Log-linked strength & running"));
+  el.appendChild(sectionLabel("Strength charts"));
   const metricCards=[
     {label:"Chin-ups",key:"chinups",unit:" reps",color:"#1a6be8"},
     {label:"Push-ups",key:"pushups",unit:" reps",color:"#e8531a"},
@@ -1263,6 +1332,10 @@ function renderProgress(){
     ]));
   });
   el.appendChild(metricGrid);
+  el.appendChild(buildMetricChart("Chin-Ups", getWeeklySeries("chinups"), "#1a6be8", "", "Log chin-ups in the weekly log or workout tracker to see this graph."));
+  el.appendChild(buildMetricChart("Push-Ups", getWeeklySeries("pushups"), "#e8531a", "", "Log push-ups in the weekly log or workout tracker to see this graph."));
+  el.appendChild(buildMetricChart("Dead Hang", getWeeklySeries("deadHang"), "#1ab873", "s", "Log dead hang seconds to see this graph."));
+  el.appendChild(buildMetricChart("Dips", getWeeklySeries("dips"), "#d4a017", "", "Log dips to see this graph."));
 
   el.appendChild(sectionLabel("Weekly history"));
   const history=h("div",{class:"history-list"});
@@ -1411,6 +1484,8 @@ function renderNutrition(){
       inp.addEventListener("input",ev=>{
         entry[prefix+macro.k]=ev.target.value;
         saveNutrition();
+      });
+      inp.addEventListener("change",()=>{
         render();
       });
       const lbl=h("div",{style:{fontFamily:"DM Mono,monospace",fontSize:"9px",color:"#444",marginBottom:"4px",textTransform:"uppercase",letterSpacing:"0.08em"}},macro.hint==="kcal"?"Cal (kcal)":macro.k+" ("+macro.hint+")");
@@ -1552,7 +1627,7 @@ function render(){
   [
     {id:"today",icon:"🏋️",label:"Plan"},
     {id:"log",icon:"📝",label:"Log"},
-    {id:"progress",icon:"📈",label:"Progress"},
+    {id:"progress",icon:"📈",label:"Stats"},
     {id:"nutrition",icon:"🥗",label:"Food"},
     {id:"shopping",icon:"🛒",label:"Shop"},
   ].forEach(n=>{
