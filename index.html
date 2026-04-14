@@ -2,11 +2,1386 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="refresh" content="0; url=./index-1.html">
-<title>Asher Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Asher — 8 Week Program</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:#0a0a0a;color:#f0f0f0;font-family:'DM Sans',sans-serif;max-width:480px;margin:0 auto;min-height:100vh;padding-bottom:80px;overflow-x:hidden}
+  ::-webkit-scrollbar{display:none}
+  input,textarea,select{outline:none;-webkit-appearance:none}
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+  button{cursor:pointer;font-family:'DM Sans',sans-serif}
+
+  /* Nav */
+  .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#0f0f0f;border-top:1px solid #1e1e1e;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+  .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;background:none;border:none;color:#444;font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;transition:color 0.15s;gap:4px}
+  .nav-btn.active{color:#e8531a}
+  .nav-icon{font-size:18px;line-height:1}
+
+  /* Cards */
+  .card{background:#161616;border:1px solid #222;border-radius:12px;padding:14px;margin-bottom:10px}
+  .card-accent{border-left:3px solid var(--accent,#e8531a)}
+  .section-label{font-family:'DM Mono',monospace;font-size:9px;color:#444;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:8px;margin-top:4px}
+
+  /* Inputs */
+  .input{width:100%;background:#111;border:1px solid #222;border-radius:8px;color:#f0f0f0;font-size:16px;padding:10px 12px;font-family:'DM Sans',sans-serif;transition:border-color 0.2s}
+  .input:focus{border-color:#e8531a55}
+  .input-label{font-family:'DM Mono',monospace;font-size:10px;color:#555;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center}
+  .field{margin-bottom:12px}
+
+  /* Buttons */
+  .btn-primary{background:#e8531a;border:none;color:#fff;border-radius:8px;padding:12px;font-size:14px;font-weight:700;width:100%;transition:opacity 0.15s}
+  .btn-primary:active{opacity:0.8}
+  .btn-ghost{background:#111;border:1px solid #222;color:#888;border-radius:8px;padding:12px;font-size:13px;font-weight:600;flex:1;transition:background 0.15s}
+  .btn-ghost:active{background:#1a1a1a}
+
+  /* Tags */
+  .tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px}
+
+  /* Progress bar */
+  .progress-track{height:5px;background:#1a1a1a;border-radius:99px;overflow:hidden}
+  .progress-fill{height:100%;border-radius:99px;transition:width 0.6s ease}
+
+  /* Chart */
+  .chart-wrap{background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:14px 4px 8px;width:100%;display:block}
+  .stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}
+  .stat-card{background:#111;border:1px solid #1e1e1e;border-radius:8px;padding:10px;text-align:center}
+  .stat-value{font-size:15px;font-weight:700}
+  .stat-label{font-size:9px;color:#444;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-top:3px}
+  .tracker-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .tracker-card{background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:12px}
+  .tracker-value{font-size:24px;font-weight:800;line-height:1}
+  .tracker-sub{font-size:11px;color:#666;margin-top:6px;line-height:1.4}
+  .meal-card{background:#161616;border:1px solid #222;border-radius:10px;padding:12px;margin-bottom:10px}
+  .list-row{display:flex;gap:8px;align-items:flex-start}
+  .tiny-btn{background:#111;border:1px solid #222;color:#888;border-radius:8px;padding:10px 12px;font-size:12px;font-weight:700}
+  .shopping-item{display:flex;gap:10px;align-items:flex-start;background:#161616;border:1px solid #222;border-radius:10px;padding:12px;margin-bottom:8px}
+  .shopping-check{width:18px;height:18px;border-radius:5px;border:1px solid #333;background:#111;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+  .shopping-item.done{opacity:0.7}
+  .shopping-item.done .shopping-check{background:#1ab873;border-color:#1ab873;color:#fff}
+  .shopping-item.done .shopping-text{text-decoration:line-through;color:#666}
+  .tracker-box{margin-top:10px;padding:10px;border-top:1px solid #222;background:#121212}
+  .tracker-box textarea.input,.tracker-box input.input{font-size:14px}
+  .tracker-status{font-size:10px;color:#666;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-top:6px}
+  .history-list{display:grid;gap:8px}
+  .history-card{background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:10px}
+  .history-value{font-size:18px;font-weight:800}
+
+  /* Exercise card */
+  .ex-card{background:#161616;border:1px solid #222;border-radius:10px;margin-bottom:8px;overflow:hidden}
+  .ex-header{padding:12px 14px 8px;border-left:3px solid var(--accent,#e8531a)}
+  .ex-name{font-size:14px;font-weight:700;color:#f0f0f0;margin-bottom:2px}
+  .ex-sets{font-size:13px;font-weight:700;color:var(--accent,#e8531a);margin-bottom:6px}
+  .ex-rest{font-size:11px;color:#555;margin-bottom:4px}
+  .ex-note{font-size:12px;color:#999;line-height:1.5;margin-bottom:4px}
+  .ex-prog{font-size:11px;color:#cc6633;line-height:1.4}
+
+  /* Change badge */
+  .change-badge{display:flex;gap:8px;align-items:flex-start;background:#0f1a0f;border:1px solid #1a3a1a;border-radius:8px;padding:10px 12px;margin-bottom:6px}
+  .change-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}
+
+  /* Day tab */
+  .day-pill{background:#111;border:1px solid #1e1e1e;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;white-space:nowrap;flex-shrink:0;transition:all 0.15s;color:#555}
+  .day-pill.active{background:#e8531a;border-color:#e8531a;color:#fff}
+  .day-pill.has-data{color:#f0f0f0;border-color:#2a2a2a}
+
+  /* Week selector */
+  .week-pill{background:#111;border:1px solid #1a1a1a;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;color:#444;flex-shrink:0;transition:all 0.15s}
+  .week-pill.active{background:#e8531a;border-color:#e8531a;color:#fff}
+  .week-pill.done{color:#f0f0f0;border-color:#2a2a2a}
+
+  /* Macro bar */
+  .macro-row{display:flex;gap:8px;margin-bottom:10px}
+  .macro-chip{flex:1;background:#111;border:1px solid #1e1e1e;border-radius:8px;padding:8px;text-align:center}
+  .macro-val{font-size:17px;font-weight:800}
+  .macro-lbl{font-size:9px;color:#555;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-top:2px}
+
+  /* Scroll row */
+  .scroll-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px}
+
+  @media (max-width: 360px){
+    .nav-btn{font-size:9px}
+    .nav-icon{font-size:16px}
+    .stat-grid,.tracker-grid{grid-template-columns:1fr}
+  }
+</style>
 </head>
-<body style="background:#0a0a0a;color:#f0f0f0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0">
-  <p>Opening tracker… <a href="./index-1.html" style="color:#e8531a">Tap here if it does not redirect.</a></p>
+<body>
+
+<div id="app"></div>
+
+<script>
+// ── Storage ───────────────────────────────────────────────────────────────
+const store = {
+  get: k => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+
+// ── Data defaults ─────────────────────────────────────────────────────────
+const START_WEIGHT = 82.2, TARGET = 76.0, DEFAULT_WATER_GOAL = 2500;
+const WEEKS = Array.from({length:8},(_,i)=>{
+  const d = new Date("2026-04-15");
+  d.setDate(d.getDate()+i*7);
+  return {week:i+1, date:d.toLocaleDateString("en-AU",{day:"numeric",month:"short"}),
+    target: parseFloat((START_WEIGHT-(START_WEIGHT-TARGET)*((i+1)/8)).toFixed(1))};
+});
+
+const defaultEntry = () => ({weight:"",chinups:"",pushups:"",deadHang:"",dips:"",
+  runKm:"",runMin:"",runEffort:"",shinPain:"no",notes:""});
+
+function loadEntries(){
+  const saved = store.get("entries_v2");
+  if(saved) return saved;
+  const e={};
+  WEEKS.forEach(w=>{ e[w.week]=defaultEntry(); });
+  e[1].weight="82.2";
+  return e;
+}
+
+function getTodayKey(){
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth()+1).padStart(2,"0");
+  const day = String(now.getDate()).padStart(2,"0");
+  return `${year}-${month}-${day}`;
+}
+
+function defaultNutritionEntry(){
+  return {
+    waterMl:0,
+    notes:"",
+    // Per-meal text + macros (cal auto = protein*4 + carbs*4 + fat*9 if blank)
+    breakfast:"", breakfastCal:"", breakfastProtein:"", breakfastCarbs:"", breakfastFat:"",
+    lunch:"",    lunchCal:"",    lunchProtein:"",    lunchCarbs:"",    lunchFat:"",
+    creami:"",   creamiCal:"",   creamiProtein:"",   creamiCarbs:"",   creamiFat:"",
+    dinner:"",   dinnerCal:"",   dinnerProtein:"",   dinnerCarbs:"",   dinnerFat:"",
+    snacks:"",   snacksCal:"",   snacksProtein:"",   snacksCarbs:"",   snacksFat:"",
+    // Legacy totals (kept for old data compatibility)
+    calories:"", protein:"", carbs:"", fat:"",
+  };
+}
+
+function mealCalc(entry, prefix){
+  // Auto-calc calories from macros if cal field is blank
+  const cal = parseFloat(entry[prefix+"Cal"]);
+  if(!isNaN(cal) && cal>0) return cal;
+  const p=parseFloat(entry[prefix+"Protein"])||0;
+  const c=parseFloat(entry[prefix+"Carbs"])||0;
+  const f=parseFloat(entry[prefix+"Fat"])||0;
+  if(p||c||f) return Math.round(p*4+c*4+f*9);
+  return 0;
+}
+
+function dailyTotals(entry){
+  const meals=["breakfast","lunch","creami","dinner","snacks"];
+  let cal=0,p=0,c=0,f=0;
+  let anyMealData=false;
+  meals.forEach(m=>{
+    const mc=mealCalc(entry,m);
+    const mp=parseFloat(entry[m+"Protein"])||0;
+    const mcarbs=parseFloat(entry[m+"Carbs"])||0;
+    const mf=parseFloat(entry[m+"Fat"])||0;
+    if(mc||mp||mcarbs||mf) anyMealData=true;
+    cal+=mc; p+=mp; c+=mcarbs; f+=mf;
+  });
+  if(anyMealData) return {cal:Math.round(cal),p:Math.round(p),c:Math.round(c),f:Math.round(f),fromMeals:true};
+  // Fallback to legacy manual totals
+  return {
+    cal:parseFloat(entry.calories)||0,
+    p:parseFloat(entry.protein)||0,
+    c:parseFloat(entry.carbs)||0,
+    f:parseFloat(entry.fat)||0,
+    fromMeals:false
+  };
+}
+
+function loadNutrition(){
+  return store.get("nutrition_v1") || {};
+}
+
+function defaultShoppingItems(){
+  return [
+    {id:"shop-1", text:"Oats", done:false},
+    {id:"shop-2", text:"Milk", done:false},
+    {id:"shop-3", text:"Greek yoghurt", done:false},
+    {id:"shop-4", text:"Bananas", done:false},
+    {id:"shop-5", text:"Stevia", done:false},
+    {id:"shop-6", text:"Cinnamon", done:false},
+    {id:"shop-7", text:"Chicken thigh", done:false},
+    {id:"shop-8", text:"Rice", done:false},
+    {id:"shop-9", text:"Frozen vegetables", done:false},
+    {id:"shop-10", text:"Soy sauce", done:false},
+    {id:"shop-11", text:"Cottage cheese", done:false},
+    {id:"shop-12", text:"Chocolate flavor mix", done:false},
+    {id:"shop-13", text:"Strawberries", done:false},
+    {id:"shop-14", text:"Vanilla", done:false},
+    {id:"shop-15", text:"Potatoes", done:false},
+    {id:"shop-16", text:"Hot sauce", done:false},
+  ];
+}
+
+function loadShopping(){
+  const saved = store.get("shopping_v1");
+  if(Array.isArray(saved) && saved.length){
+    const defaults=defaultShoppingItems();
+    const existingTexts=new Set(saved.map(function(item){ return (item.text || "").toLowerCase(); }));
+    defaults.forEach(function(item){
+      if(!existingTexts.has(item.text.toLowerCase())) saved.push(item);
+    });
+    return saved;
+  }
+  return defaultShoppingItems();
+}
+
+function loadWorkoutLogs(){
+  return store.get("workout_logs_v1") || {};
+}
+
+// ── Log parsing helpers ───────────────────────────────────────────────────
+function parseRepsFromLog(text){
+  if(!text) return null;
+  const t = text.toLowerCase().trim();
+  // Zero indicators
+  if(/\b(zero|none|nil|couldn'?t|can'?t|failed|no reps?|0 reps?)\b/.test(t)) return 0;
+  // "3 x 0" or "3x0" → 0
+  const setRep = t.match(/\d+\s*[x×]\s*(\d+)/);
+  if(setRep) return parseInt(setRep[1]);
+  // Bare number
+  const bare = t.match(/^(\d+)/);
+  if(bare) return parseInt(bare[1]);
+  return null;
+}
+
+function getLoggedMetricForWeek(week, dayId, exerciseSlug){
+  // Returns the best (max) reps logged for a given exercise this week, or null
+  const key = `w${week}-${dayId}-${exerciseSlug}`;
+  const log = state.workoutLogs[key];
+  if(!log || (!log.done && !log.failed)) return null;
+  const fromDone = parseRepsFromLog(log.done);
+  // If the "done" field explicitly says 0 or zero, trust it
+  if(fromDone !== null) return fromDone;
+  // If failed is filled but done is blank, something went wrong → treat as 0
+  if(log.failed && !log.done) return 0;
+  return null;
+}
+
+// ── Adaptive plan engine ──────────────────────────────────────────────────
+function getAdaptedPlan(week, entries){
+  const prev = week>1 ? entries[week-1] : null;
+  const prev2 = week>2 ? entries[week-2] : null;
+  const changes = [];
+
+  // Pull from weekly log entries (baseline)
+  let chinups = prev?.chinups ? parseInt(prev.chinups)||4 : 4;
+  let pushups = prev?.pushups ? parseInt(prev.pushups)||15 : 15;
+
+  // Override with actual workout log data from current week (more up-to-date)
+  const loggedChinups = getLoggedMetricForWeek(week, "pull", "chin-up-underhand");
+  const loggedPushups = getLoggedMetricForWeek(week, "push", "flat-push-up");
+
+  if(loggedChinups !== null){
+    if(loggedChinups < chinups || (prev?.chinups === undefined || prev?.chinups === "")){
+      if(loggedChinups !== chinups)
+        changes.push({field:"Chin-Up",change:`Adjusted from log: ${loggedChinups} rep${loggedChinups===1?"":"s"} recorded`,reason:`Your workout log for this week shows ${loggedChinups} full chin-up${loggedChinups===1?"":"s"}. Plan adapted to your real current level.`,color:"#d4a017"});
+      chinups = loggedChinups;
+    }
+  }
+  if(loggedPushups !== null){
+    if(loggedPushups < pushups || (prev?.pushups === undefined || prev?.pushups === "")){
+      if(loggedPushups !== pushups)
+        changes.push({field:"Push-Up",change:`Adjusted from log: ${loggedPushups} rep${loggedPushups===1?"":"s"} recorded`,reason:`Your workout log for this week shows ${loggedPushups} flat push-up${loggedPushups===1?"":"s"}. Plan adapted to your real current level.`,color:"#d4a017"});
+      pushups = loggedPushups;
+    }
+  }
+  const runEffort = prev?.runEffort ? parseInt(prev.runEffort)||5 : 5;
+  const runKm = prev?.runKm ? parseFloat(prev.runKm)||0 : 0;
+  const shinPain = prev?.shinPain === "yes";
+  const weightStalled = prev?.weight && prev2?.weight &&
+    Math.abs(parseFloat(prev.weight)-parseFloat(prev2.weight)) < 0.2;
+
+  // ── PUSH progressions
+  const pushExs = [];
+
+  // Incline push-up — always show when pushups = 0 regardless of week
+  const inclineWeeks = week <= 2 || pushups === 0;
+  if(inclineWeeks){
+    const inclineNote = pushups===0
+      ? "0 flat push-ups logged — start here. Hands high on a bench or step, lower the incline angle each session as it gets easier."
+      : "Hands on bench or step. Full chest down, elbows 45°. Builds the pattern before going flat.";
+    pushExs.push({name:"Incline Push-Up",sets:"3",reps:pushups===0?"10–12":"12–15",rest:"60s",
+      note:inclineNote,
+      prog:pushups===0?"Progress: when you can do 3×12 at a low incline, move to flat push-ups.":"Drop incline angle each week."});
+  }
+
+  // Flat push-up — skip if 0 logged (not ready yet)
+  if(pushups > 0){
+    let flatSets = 3;
+    if(pushups >= 20){ flatSets = 4; changes.push({field:"Flat Push-Up",change:"Added a 4th set",reason:`You hit ${pushups} reps — volume increased to match.`,color:"#1ab873"}); }
+    pushExs.push({name:"Flat Push-Up",sets:`${flatSets}`,reps:"AMRAP −2",rest:"90s",
+      note:"Stop 2 reps short of failure. Lock out at top, chest touches floor at bottom.",
+      prog:`Target: 20+ reps to unlock diamond push-up progression. You're at ${pushups}.`});
+  }
+
+  // Diamond — only if pushups are solid
+  let diamondSets="2", diamondReps="6–8";
+  if(pushups>=20){ diamondSets="3"; diamondReps="8–10";
+    if(week>=3) changes.push({field:"Diamond Push-Up",change:"3 sets × 8–10",reason:"Flat push-up strength supports higher diamond volume.",color:"#1ab873"}); }
+  if(pushups>0){
+    pushExs.push({name:"Diamond Push-Up",sets:diamondSets,reps:diamondReps,rest:"90s",
+      note:"Hands form a diamond under chest. Heaviest tricep load in the session.",
+      prog:"Build to 3×12 by week 8."});
+  }
+
+  // Pike
+  let pikeNote="Hips high, forehead toward floor. Shoulder strength foundation.";
+  let pikeSets="3", pikeProg="Elevate feet on bench from week 5.";
+  if(week>=5){ pikeSets="4"; pikeNote="Feet elevated on bench. Full shoulder press range of motion.";
+    pikeProg="Elevate feet higher as strength improves.";
+    if(week===5) changes.push({field:"Pike Push-Up",change:"Feet on bench + 4th set",reason:"Week 5 progression — heavier shoulder load.",color:"#e8531a"}); }
+  pushExs.push({name:"Pike Push-Up",sets:pikeSets,reps:"8–10",rest:"90s",note:pikeNote,prog:pikeProg});
+
+  // Dips
+  let dipNote="Elbows track back, straight spine throughout.";
+  let dipProg="Add 2-second pause at bottom from week 4.";
+  if(week>=4){ dipNote="Elbows back. 2-second pause at bottom every rep."; dipProg="Build to 3×15."; }
+  pushExs.push({name:"Tricep Dips (Chair)",sets:"3",reps:"10–12",rest:"60s",note:dipNote,prog:dipProg});
+
+  // ── PULL progressions
+  const pullExs = [];
+
+  // Dead hang
+  let hangTime = week<=3?"20–30s":week<=5?"30–40s":"40–45s";
+  if(week===4) changes.push({field:"Dead Hang",change:"Increase hold to 30–40s",reason:"Week 4 progression — building grip endurance.",color:"#1ab873"});
+  if(week===6) changes.push({field:"Dead Hang",change:"Target 45s hold",reason:"Week 6 — approaching full hang capacity.",color:"#1ab873"});
+  pullExs.push({name:"Dead Hang",sets:"3",reps:hangTime,rest:"60s",
+    note:"Depress shoulder blades slightly — don't just dangle. Active hang.",
+    prog:`Building toward 45s holds. Current target: ${hangTime}.`});
+
+  // Scapular pull-up
+  let scapProg="Add 2s hold at top from week 3.";
+  let scapNote="From dead hang, depress and retract shoulder blades without bending elbows.";
+  if(week>=3){ scapProg="Hold 2s at top of each rep."; scapNote="From dead hang, depress and retract. Hold 2 seconds at top."; }
+  pullExs.push({name:"Scapular Pull-Up",sets:"3",reps:"8–10",rest:"60s",note:scapNote,prog:scapProg});
+
+  // Negatives — increase volume when chinups = 0 (negatives ARE the primary builder)
+  let negTime="5–8s", negSets="3";
+  if(chinups===0){ negSets="4";
+    changes.push({field:"Negative Pull-Up",change:"4 sets (primary builder)",reason:"0 full chin-ups logged — negatives are your main strength builder right now. Extra set added.",color:"#e8531a"}); }
+  if(week>=5){ negTime="8–10s"; negSets=chinups>=6?"4":negSets;
+    if(week===5) changes.push({field:"Negative Pull-Up",change:"Slow to 8–10s lowering",reason:"Week 5 — increasing time under tension.",color:"#e8531a"}); }
+  if(chinups>=6 && week>=5){ changes.push({field:"Negative Pull-Up",change:"Added 4th set",reason:`${chinups} chin-ups logged — pulling strength ready for more volume.`,color:"#1ab873"}); }
+  pullExs.push({name:"Negative Pull-Up",sets:negSets,reps:"4–5",rest:"2 min",
+    note:`Lower as slowly as possible — target ${negTime} down. Jump or use a chair to get chin over bar.`,
+    prog:`Current target: ${negTime}. This is the primary pull-up builder.`});
+
+  // Chin-up — replace with jumping/band-assisted if 0 full reps logged
+  if(chinups===0){
+    pullExs.push({name:"Jumping Chin-Up (Assisted)",sets:"3",reps:"5–6",rest:"2 min",
+      note:"Use a chair or jump to get chin over bar, then lower yourself as slowly as you can (5–8s down). Full ROM each rep — dead hang at the bottom. This builds the same muscles as a full chin-up.",
+      prog:"When you can control the descent for 8s consistently, you are close to your first full chin-up. Log every session."});
+  } else {
+    let chinSets="3", chinNote=`You logged ${chinups} rep${chinups===1?"":"s"}. Aim for ${chinups} clean reps per set.`;
+    if(chinups>=6 && week>=4){ chinSets="4";
+      changes.push({field:"Chin-Up",change:"4th set added",reason:`${chinups} reps logged — capacity supports extra volume.`,color:"#1ab873"}); }
+    pullExs.push({name:"Chin-Up (Underhand)",sets:chinSets,reps:"Max quality",rest:"2 min",
+      note:chinNote+" Full ROM: dead hang to chin clearly over bar. No kipping.",
+      prog:`Week 4 target: 6 reps. Week 8 target: 8 reps. You're at ${chinups}.`});
+  }
+
+  // Inverted row
+  let rowAngle="45°", rowNote="Body rigid, pull chest to bar. Squeeze shoulder blades at top.";
+  if(week>=6){ rowAngle="more horizontal"; rowNote="Body more horizontal — greater difficulty. Pause 3s at top.";
+    if(week===6) changes.push({field:"Inverted Row",change:"Lower body angle + 3s pause",reason:"Week 6 progression — horizontal rows are significantly harder.",color:"#e8531a"}); }
+  pullExs.push({name:"Inverted Row",sets:"3",reps:"10–12",rest:"90s",note:rowNote,
+    prog:`Angle: ${rowAngle}. Lower further as strength improves.`});
+
+  // Pull-apart
+  pullExs.push({name:"Towel Pull-Apart",sets:"3",reps:"15",rest:"45s",
+    note:"Hold towel at eye level, pull apart to full extension. Rear delt and shoulder health.",
+    prog:"Slow to 3s each direction when it feels easy."});
+
+  // ── CORE progressions
+  const coreExs = [];
+  let bugNote="Opposite arm and leg lower slowly. Lower back stays glued to floor.";
+  let bugProg="Add 3s pause at full extension.";
+  if(week>=3){ bugNote="Opposite arm and leg, 3-second pause at full extension. Lower back glued down."; bugProg="Build to 5s pause."; }
+  coreExs.push({name:"Dead Bug",sets:"3",reps:"8/side",rest:"45s",note:bugNote,prog:bugProg});
+
+  let hollowTime=week<=2?"20–25s":week<=4?"25–35s":"35–45s";
+  coreExs.push({name:"Hollow Body Hold",sets:"3",reps:hollowTime,rest:"30s",
+    note:"Arms overhead, lower back into floor, legs raised. Bend knees if back lifts.",
+    prog:`Target time: ${hollowTime}. Build to 45s by week 8.`});
+
+  let plankNote="Elbows under shoulders. Squeeze glutes and quads.";
+  let plankProg="Progress to shoulder taps from week 4.";
+  if(week>=4){ plankNote="Plank shoulder taps: tap each shoulder alternately, keep hips still."; plankProg="Add more taps per set each week."; }
+  coreExs.push({name:week>=4?"Plank Shoulder Taps":"Plank",sets:"2",reps:week>=4?"10 taps/side":"30–45s",rest:"30s",note:plankNote,prog:plankProg});
+
+  // ── RUN plan
+  let runPlan = {};
+  let baseWeek = week;
+
+  if(shinPain){
+    runPlan = {
+      wed:{type:"Run/Walk",desc:"3 min run / 1 min walk × 6. Shin pain flagged — holding run/walk.",duration:"24 min"},
+      sat:{type:"Run/Walk",desc:"3 min run / 1 min walk × 5.",duration:"20 min"}
+    };
+    changes.push({field:"Running",change:"Held at Run/Walk — shin pain",reason:"You flagged shin pain last week. Drop to run/walk and allow recovery. Never push through shin pain.",color:"#e85555"});
+  } else if(runEffort>=8){
+    baseWeek = Math.max(1, week-1);
+    changes.push({field:"Running",change:"Holding previous week's level",reason:`Effort was ${runEffort}/10 last run — too hard to progress safely. Consolidating fitness first.`,color:"#d4a017"});
+  } else if(runEffort<=4 && week<=7){
+    baseWeek = Math.min(8, week+1);
+    changes.push({field:"Running",change:"Progressed one level early",reason:`Effort was only ${runEffort}/10 — you're ahead of the curve. Moving to next level.`,color:"#1ab873"});
+  }
+
+  const runPlans = {
+    1:{wed:{type:"Run/Walk",desc:"3 min run / 1 min walk. Repeat for full duration. Focus on shin comfort.",duration:"25 min"},sat:{type:"Run/Walk",desc:"3 min run / 1 min walk. Same as Wednesday.",duration:"25 min"}},
+    2:{wed:{type:"Run/Walk",desc:"3 min run / 1 min walk. Try to keep form consistent on run sections.",duration:"25 min"},sat:{type:"Run/Walk",desc:"3 min run / 1 min walk. Note how shins feel.",duration:"25 min"}},
+    3:{wed:{type:"Easy Run",desc:"Continuous easy pace. Conversational — you can speak full sentences. If you can't, slow down.",duration:"28 min"},sat:{type:"Easy Run",desc:"Continuous easy pace.",duration:"25 min"}},
+    4:{wed:{type:"Easy Run",desc:"Continuous easy pace. Focus on breathing rhythm.",duration:"28 min"},sat:{type:"Easy Run",desc:"Continuous easy pace.",duration:"25 min"}},
+    5:{wed:{type:"Easy Run",desc:"Continuous easy pace. This should be starting to feel more comfortable.",duration:"30 min"},sat:{type:"Intervals",desc:"6 × 90s hard effort (7–8/10) with 90s walk recovery between each. Warm up 3 min walk first.",duration:"~24 min"}},
+    6:{wed:{type:"Easy Run",desc:"Continuous easy pace.",duration:"30 min"},sat:{type:"Intervals",desc:"6 × 90s hard effort (7–8/10) with 90s walk recovery.",duration:"~24 min"}},
+    7:{wed:{type:"Easy Run",desc:"Build to 35 min. Steady comfortable pace.",duration:"35 min"},sat:{type:"Intervals",desc:"8 × 90s hard effort (7–8/10) with 90s walk recovery.",duration:"~28 min"}},
+    8:{wed:{type:"Easy Run",desc:"Final easy run — reflect on how far your fitness has come from week 1.",duration:"35 min"},sat:{type:"Intervals",desc:"8 × 90s hard effort (7–8/10) with 90s walk recovery.",duration:"~28 min"}},
+  };
+
+  if(!runPlan.wed) runPlan = runPlans[Math.min(8,Math.max(1,baseWeek))];
+
+  // ── DIET adjustments
+  let calories = 1800, carbsNote = "Standard training day macros.";
+  let dietChanges = [];
+  if(weightStalled){
+    calories = 1700;
+    carbsNote="Reduce carbs by 35g — cut rice portion to 100g cooked. Keep protein at 145g.";
+    dietChanges.push({field:"Calories",change:"Reduced to 1700 kcal",reason:"Weight hasn't moved in 2 weeks. Dropping carbs by 35g to restart the deficit. Keep protein exactly the same.",color:"#d4a017"});
+  }
+
+  return { pushExs, pullExs, coreExs, runPlan, calories, carbsNote, changes: [...changes,...dietChanges] };
+}
+
+// ── App state ──────────────────────────────────────────────────────────────
+let state = {
+  tab: "today",
+  activeWeek: 1,
+  activeDay: "push",
+  entries: loadEntries(),
+  nutrition: loadNutrition(),
+  selectedDate: getTodayKey(),
+  shopping: loadShopping(),
+  workoutLogs: loadWorkoutLogs(),
+  saveTimer: null,
+};
+
+function saveEntries(){
+  store.set("entries_v2", state.entries);
+}
+
+function saveNutrition(){
+  store.set("nutrition_v1", state.nutrition);
+}
+
+function saveShopping(){
+  store.set("shopping_v1", state.shopping);
+}
+
+function saveWorkoutLogs(){
+  store.set("workout_logs_v1", state.workoutLogs);
+}
+
+function getNutritionEntry(dateKey){
+  if(!state.nutrition[dateKey]) state.nutrition[dateKey] = defaultNutritionEntry();
+  return state.nutrition[dateKey];
+}
+
+function slugify(text){
+  return String(text || "").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+}
+
+function getWorkoutLog(week, dayId, exerciseName){
+  const key=`w${week}-${dayId}-${slugify(exerciseName)}`;
+  if(!state.workoutLogs[key]) state.workoutLogs[key]={done:"",failed:""};
+  return state.workoutLogs[key];
+}
+
+function createTrackedExerciseCard(ex, accent, week, dayId){
+  const log = getWorkoutLog(week, dayId, ex.name);
+  const el=exCard(ex, accent);
+  const box=h("div",{class:"tracker-box"});
+  const doneInput=h("input",{class:"input",placeholder:"What did you get? e.g. 3 x 8, 32s hold, 2.8 km",value:log.done||""});
+  doneInput.addEventListener("input",function(ev){
+    log.done=ev.target.value;
+    saveWorkoutLogs();
+  });
+  const failInput=h("textarea",{class:"input",rows:"2",placeholder:"What failed? e.g. last set only got 5 reps, grip gave out, pace too hard",style:{resize:"none",lineHeight:"1.5"}});
+  failInput.value=log.failed||"";
+  failInput.addEventListener("input",function(ev){
+    log.failed=ev.target.value;
+    saveWorkoutLogs();
+  });
+  box.appendChild(inputField("Completed",null,doneInput));
+  box.appendChild(inputField("Failed at",null,failInput));
+  box.appendChild(h("div",{class:"tracker-status"},log.done||log.failed?"Saved to workout history":"Add results while training"));
+  el.appendChild(box);
+  return el;
+}
+
+function getLatestMetric(key){
+  for(let i=WEEKS.length;i>=1;i--){
+    const value=state.entries[i]?.[key];
+    if(value!==undefined && value!=="") return value;
+  }
+  return null;
+}
+
+function getBestMetric(key){
+  const values=WEEKS.map(function(w){ return parseFloat(state.entries[w.week]?.[key]); }).filter(function(v){ return !Number.isNaN(v); });
+  if(!values.length) return null;
+  return Math.max.apply(null, values);
+}
+
+// ── Render helpers ─────────────────────────────────────────────────────────
+const h = (tag, attrs={}, ...children) => {
+  const el = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v])=>{
+    if(k==="style" && typeof v==="object") Object.assign(el.style,v);
+    else if(k.startsWith("on")) el.addEventListener(k.slice(2).toLowerCase(),v);
+    else el.setAttribute(k,v);
+  });
+  children.flat().forEach(c=>{
+    if(c==null||c===false) return;
+    el.appendChild(typeof c==="string"?document.createTextNode(c):c);
+  });
+  return el;
+};
+
+function card(accent, ...children){
+  const el=h("div",{class:"card card-accent"});
+  el.style.setProperty("--accent",accent);
+  children.flat().forEach(c=>c&&el.appendChild(typeof c==="string"?document.createTextNode(c):c));
+  return el;
+}
+
+function exCard(ex, accent){
+  const el=h("div",{class:"ex-card"});
+  el.style.setProperty("--accent",accent);
+  el.appendChild(h("div",{class:"ex-header"},[
+    h("div",{class:"ex-name"},ex.name),
+    h("div",{class:"ex-sets"},`${ex.sets} sets × ${ex.reps}`),
+    h("div",{class:"ex-rest"},`Rest: ${ex.rest}`),
+    h("div",{class:"ex-note"},ex.note),
+    h("div",{class:"ex-prog"},`↗ ${ex.prog}`),
+  ]));
+  return el;
+}
+
+function sectionLabel(text){
+  return h("div",{class:"section-label"},text);
+}
+
+function inputField(label, hint, inputEl){
+  const lbl=h("div",{class:"input-label"},[label, hint?h("span",{style:{color:"#444",fontSize:"10px"}},hint):null]);
+  const wrap=h("div",{class:"field"},[lbl,inputEl]);
+  return wrap;
+}
+
+// ── Chart (canvas-based, no external lib needed) ──────────────────────────
+function drawWeightChart(canvas, entries){
+  if(!canvas) return;
+  const dpr=window.devicePixelRatio||1;
+  var parent=canvas.parentElement; var W=(parent&&parent.offsetWidth>50)?parent.offsetWidth:Math.min(window.innerWidth-40,440);
+  const H=200;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+"px"; canvas.style.height=H+"px";
+  const ctx=canvas.getContext("2d");
+  if(!ctx) return;
+  ctx.scale(dpr,dpr);
+  const pad={top:10,right:24,bottom:30,left:34};
+  const cw=W-pad.left-pad.right, ch=H-pad.top-pad.bottom;
+  const minY=73.5, maxY=84;
+  const toX=i=>pad.left+(i/(WEEKS.length-1))*cw;
+  const toY=v=>pad.top+ch-(v-minY)/(maxY-minY)*ch;
+  ctx.strokeStyle="#1e1e1e"; ctx.lineWidth=1;
+  [75,77,79,81,83].forEach(y=>{
+    ctx.beginPath(); ctx.moveTo(pad.left,toY(y)); ctx.lineTo(pad.left+cw,toY(y)); ctx.stroke();
+  });
+  ctx.strokeStyle="#1ab873"; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+  ctx.beginPath();
+  WEEKS.forEach((w,i)=>i===0?ctx.moveTo(toX(i),toY(START_WEIGHT)):ctx.lineTo(toX(i),toY(w.target)));
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle="rgba(26,184,115,0.06)";
+  ctx.beginPath(); ctx.moveTo(toX(0),toY(START_WEIGHT));
+  WEEKS.forEach((w,i)=>ctx.lineTo(toX(i),toY(w.target)));
+  ctx.lineTo(toX(WEEKS.length-1),H); ctx.lineTo(toX(0),H); ctx.closePath(); ctx.fill();
+  const actualPts=WEEKS.map((w,i)=>({x:toX(i),y:entries[w.week]?.weight?toY(parseFloat(entries[w.week].weight)):null})).filter(p=>p.y!==null);
+  if(actualPts.length>0){
+    ctx.fillStyle="rgba(232,83,26,0.12)";
+    ctx.beginPath(); ctx.moveTo(actualPts[0].x,actualPts[0].y);
+    actualPts.forEach(p=>ctx.lineTo(p.x,p.y));
+    ctx.lineTo(actualPts[actualPts.length-1].x,H); ctx.lineTo(actualPts[0].x,H); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle="#e8531a"; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.moveTo(actualPts[0].x,actualPts[0].y);
+    actualPts.forEach(p=>ctx.lineTo(p.x,p.y)); ctx.stroke();
+    actualPts.forEach(p=>{ ctx.fillStyle="#e8531a"; ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2); ctx.fill(); });
+  }
+  ctx.fillStyle="#555"; ctx.font="9px DM Mono,monospace"; ctx.textAlign="center";
+  WEEKS.forEach((w,i)=>ctx.fillText("W"+w.week,toX(i),H-4));
+  ctx.textAlign="right";
+  [75,77,79,81,83].forEach(y=>ctx.fillText(y,pad.left-4,toY(y)+3));
+  ctx.strokeStyle="#1ab87355"; ctx.lineWidth=1; ctx.setLineDash([2,2]);
+  ctx.beginPath(); ctx.moveTo(pad.left,toY(76)); ctx.lineTo(pad.left+cw,toY(76)); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle="#1ab873"; ctx.font="8px DM Mono,monospace"; ctx.textAlign="left";
+  ctx.fillText("76kg",pad.left+cw+2,toY(76)+3);
+}
+
+function buildChart(entries){
+  const canvas=h("canvas",{style:{display:"block",width:"100%",height:"200px"}});
+  const wrap=h("div",{class:"chart-wrap"});
+  wrap.appendChild(h("div",{style:{textAlign:"center",fontFamily:"DM Mono,monospace",fontSize:"9px",color:"#444",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:"10px",paddingLeft:"10px"}},"Weight (kg) · 8-Week View"));
+  wrap.appendChild(canvas);
+  const leg=h("div",{style:{display:"flex",justifyContent:"center",gap:"16px",marginTop:"8px",paddingLeft:"10px"}});
+  [["Actual","#e8531a"],["Target","#1ab873"]].forEach(function(lc){
+    leg.appendChild(h("div",{style:{display:"flex",alignItems:"center",gap:"5px"}},[
+      h("div",{style:{width:"16px",height:"2px",background:lc[1],borderRadius:"2px"}}),
+      h("span",{style:{fontSize:"10px",color:"#555",fontFamily:"DM Mono,monospace"}},lc[0])
+    ]));
+  });
+  wrap.appendChild(leg);
+  wrap._drawFn = function(){ drawWeightChart(canvas, entries); };
+  return wrap;
+}
+
+function buildPaceChart(paceData){
+  const paceCanvas=h("canvas",{style:{display:"block",width:"100%",height:"140px"}});
+  const paceWrap=h("div",{class:"chart-wrap"});
+  paceWrap.appendChild(paceCanvas);
+  paceWrap._drawFn = function(){
+    if(paceData.length < 2) return;
+    const dpr=window.devicePixelRatio||1;
+    var pp=paceCanvas.parentElement; var W=(pp&&pp.offsetWidth>50)?pp.offsetWidth:Math.min(window.innerWidth-40,440);
+    const H=140;
+    paceCanvas.width=W*dpr; paceCanvas.height=H*dpr;
+    paceCanvas.style.width=W+"px"; paceCanvas.style.height=H+"px";
+    const ctx=paceCanvas.getContext("2d");
+    if(!ctx) return;
+    ctx.scale(dpr,dpr);
+    const pad={top:8,right:20,bottom:24,left:36};
+    const cw=W-pad.left-pad.right,ch=H-pad.top-pad.bottom;
+    const paces=paceData.map(function(d){return d.pace;});
+    const minP=Math.min.apply(null,paces)-0.3;
+    const maxP=Math.max.apply(null,paces)+0.3;
+    const safeRange=Math.max(0.5,maxP-minP);
+    const toX=function(i){return pad.left+(paceData[i].week-1)/(WEEKS.length-1)*cw;};
+    const toY=function(v){return pad.top+ch-(v-minP)/safeRange*ch;};
+    ctx.strokeStyle="#1e1e1e"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.left,pad.top); ctx.lineTo(pad.left,pad.top+ch); ctx.lineTo(pad.left+cw,pad.top+ch); ctx.stroke();
+    ctx.strokeStyle="#d4a017"; ctx.lineWidth=2;
+    ctx.beginPath();
+    paceData.forEach(function(d,i){i===0?ctx.moveTo(toX(i),toY(d.pace)):ctx.lineTo(toX(i),toY(d.pace));});
+    ctx.stroke();
+    paceData.forEach(function(d,i){
+      ctx.fillStyle="#d4a017"; ctx.beginPath(); ctx.arc(toX(i),toY(d.pace),3.5,0,Math.PI*2); ctx.fill();
+    });
+    ctx.fillStyle="#555"; ctx.font="9px DM Mono,monospace"; ctx.textAlign="center";
+    paceData.forEach(function(d,i){ctx.fillText("W"+d.week,toX(i),H-4);});
+    ctx.textAlign="right";
+    paceData.forEach(function(d){ctx.fillText(d.pace.toFixed(1),pad.left-4,toY(d.pace)+3);});
+  };
+  return paceWrap;
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+function renderToday(){
+  const el=h("div",{style:{padding:"0 14px"}});
+  const week=state.activeWeek;
+  const plan=getAdaptedPlan(week, state.entries);
+  const wData=WEEKS[week-1];
+
+  // Header
+  el.appendChild(h("div",{style:{padding:"16px 0 4px"}},[
+    h("div",{style:{fontFamily:"DM Mono,monospace",fontSize:"9px",color:"#e8531a",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:"4px"}},`Week ${week} · ${wData.date}`),
+    h("div",{style:{fontSize:"22px",fontWeight:"800",lineHeight:"1.1"}},"Today's"),
+    h("div",{style:{fontSize:"22px",fontWeight:"800",color:"#e8531a",lineHeight:"1.1",marginBottom:"10px"}},"Plan"),
+  ]));
+
+  // Week selector
+  const scrollRow=h("div",{class:"scroll-row"});
+  WEEKS.forEach(w=>{
+    const hasData=!!state.entries[w.week]?.weight;
+    const btn=h("button",{
+      class:`week-pill${state.activeWeek===w.week?" active":""}${hasData&&state.activeWeek!==w.week?" done":""}`,
+      onClick:()=>{ state.activeWeek=w.week; render(); }
+    },`Wk ${w.week}`);
+    scrollRow.appendChild(btn);
+  });
+  el.appendChild(scrollRow);
+
+  // Changes banner
+  if(plan.changes.length>0){
+    el.appendChild(sectionLabel("Plan adjustments"));
+    plan.changes.forEach(c=>{
+      const badge=h("div",{class:"change-badge"});
+      badge.appendChild(h("div",{class:"change-dot",style:{background:c.color}}));
+      badge.appendChild(h("div",{},[
+        h("div",{style:{fontSize:"12px",fontWeight:"700",color:c.color,marginBottom:"3px"}},`${c.field}: ${c.change}`),
+        h("div",{style:{fontSize:"11px",color:"#777",lineHeight:"1.5"}},c.reason),
+      ]));
+      el.appendChild(badge);
+    });
+  }
+
+  // Day selector
+  const days=[
+    {id:"push",label:"Push",color:"#e8531a",sub:"Mon & Thu"},
+    {id:"pull",label:"Pull",color:"#1a6be8",sub:"Tue & Fri"},
+    {id:"run_wed",label:"Wed Run",color:"#d4a017",sub:"Wednesday"},
+    {id:"run_sat",label:"Sat Run",color:"#d4a017",sub:"Saturday"},
+    {id:"core",label:"Core",color:"#1ab873",sub:"Every session"},
+    {id:"diet",label:"Diet",color:"#1ab873",sub:"Daily"},
+  ];
+  el.appendChild(sectionLabel("Session"));
+  const dayRow=h("div",{class:"scroll-row"});
+  days.forEach(d=>{
+    const btn=h("button",{
+      class:`day-pill${state.activeDay===d.id?" active":""}`,
+      style:{borderColor:state.activeDay===d.id?d.color:""},
+      onClick:()=>{ state.activeDay=d.id; render(); }
+    },d.label);
+    if(state.activeDay===d.id){ btn.style.background=d.color; btn.style.color="#fff"; }
+    dayRow.appendChild(btn);
+  });
+  el.appendChild(dayRow);
+
+  // Session content
+  const day=days.find(d=>d.id===state.activeDay);
+  if(day){
+    const header=h("div",{style:{marginBottom:"12px"}},[
+      h("div",{style:{fontSize:"18px",fontWeight:"800",color:day.color}},day.label+" Day"),
+      h("div",{style:{fontSize:"11px",color:"#555"}},day.sub),
+    ]);
+    el.appendChild(header);
+  }
+
+  if(state.activeDay==="push"){
+    el.appendChild(sectionLabel("Warmup — 5 min (every session)"));
+    el.appendChild(card("#1ab873",
+      h("div",{style:{fontSize:"12px",color:"#999",lineHeight:"1.6"}},[
+        "• Arm circles ×15 each way, leg swings ×10/side\n",
+        "• 10 bodyweight squats, 10 scapular shrugs, 10 cat-cows\n",
+        "• 2 min shadow footwork / light jog on spot\n",
+        "• 10 inchworms, 5 deep lunge with twist each side"
+      ])
+    ));
+    el.appendChild(sectionLabel("Push exercises — 30 min"));
+    plan.pushExs.forEach(ex=>el.appendChild(createTrackedExerciseCard(ex,"#e8531a",week,"push")));
+  }
+  else if(state.activeDay==="pull"){
+    el.appendChild(sectionLabel("Warmup — 5 min (every session)"));
+    el.appendChild(card("#1ab873",h("div",{style:{fontSize:"12px",color:"#999",lineHeight:"1.6"}},"• Arm circles ×15 each way, leg swings ×10/side\n• 10 bodyweight squats, 10 scapular shrugs, 10 cat-cows\n• 2 min shadow footwork / light jog on spot\n• 10 inchworms, 5 deep lunge with twist each side")));
+    el.appendChild(sectionLabel("Pull exercises — 32 min"));
+    plan.pullExs.forEach(ex=>el.appendChild(createTrackedExerciseCard(ex,"#1a6be8",week,"pull")));
+  }
+  else if(state.activeDay==="run_wed"){
+    const run=plan.runPlan.wed;
+    el.appendChild(createTrackedExerciseCard({
+      name:"Wednesday Run",
+      sets:"1",
+      reps:run.duration,
+      rest:"As needed",
+      note:run.desc,
+      prog:"Log the distance you managed and where pace broke down."
+    },"#d4a017",week,"run_wed"));
+    el.appendChild(card("#d4a017",[
+      h("div",{style:{fontSize:"12px",fontWeight:"700",color:"#d4a017",marginBottom:"4px"}},run.type),
+      h("div",{style:{fontSize:"13px",color:"#f0f0f0",lineHeight:"1.6",marginBottom:"6px"}},run.desc),
+      h("div",{style:{fontSize:"11px",color:"#555"}},`Duration: ${run.duration}`),
+    ]));
+    el.appendChild(sectionLabel("Shin pain protocol"));
+    el.appendChild(card("#e8531a",h("div",{style:{fontSize:"12px",color:"#999",lineHeight:"1.5"}},"If shins feel tender during or after: stop, walk home, log shin pain = Yes. Rest 48 hrs. Never push through shin pain.")));
+  }
+  else if(state.activeDay==="run_sat"){
+    const run=plan.runPlan.sat;
+    el.appendChild(createTrackedExerciseCard({
+      name:"Saturday Run",
+      sets:"1",
+      reps:run.duration,
+      rest:"Walk recoveries as prescribed",
+      note:run.desc,
+      prog:"Log what you completed and what interval or distance fell apart."
+    },"#d4a017",week,"run_sat"));
+    el.appendChild(card("#d4a017",[
+      h("div",{style:{fontSize:"12px",fontWeight:"700",color:"#d4a017",marginBottom:"4px"}},run.type),
+      h("div",{style:{fontSize:"13px",color:"#f0f0f0",lineHeight:"1.6",marginBottom:"6px"}},run.desc),
+      h("div",{style:{fontSize:"11px",color:"#555"}},`Duration: ${run.duration}`),
+    ]));
+  }
+  else if(state.activeDay==="core"){
+    el.appendChild(sectionLabel("Core block — 8 min (add after every session)"));
+    plan.coreExs.forEach(ex=>el.appendChild(createTrackedExerciseCard(ex,"#1ab873",week,"core")));
+  }
+  else if(state.activeDay==="diet"){
+    el.appendChild(sectionLabel("Today's macros"));
+    const macroRow=h("div",{class:"macro-row"});
+    [{v:`${plan.calories}`,l:"Calories",c:"#1ab873"},{v:"145g",l:"Protein",c:"#e8531a"},{v:"145g",l:"Carbs",c:"#1a6be8"},{v:"60g",l:"Fat",c:"#d4a017"}]
+      .forEach(m=>{
+        macroRow.appendChild(h("div",{class:"macro-chip"},[
+          h("div",{class:"macro-val",style:{color:m.c}},m.v),
+          h("div",{class:"macro-lbl"},m.l),
+        ]));
+      });
+    el.appendChild(macroRow);
+    if(plan.carbsNote!=="Standard training day macros."){
+      el.appendChild(card("#d4a017",[
+        h("div",{style:{fontSize:"11px",fontWeight:"700",color:"#d4a017",marginBottom:"3px"}},"Calorie adjustment this week"),
+        h("div",{style:{fontSize:"12px",color:"#999",lineHeight:"1.5"}},plan.carbsNote),
+      ]));
+    }
+    el.appendChild(sectionLabel("Training days (Mon–Sat)"));
+    [
+      {name:"Breakfast",desc:"80g rolled oats cooked in 200ml full-cream milk. Top with 150g Greek yoghurt + 1 medium banana. Stevia + cinnamon.",macros:"~450 kcal  ·  30g protein  ·  62g carbs  ·  11g fat",color:"#1ab873"},
+      {name:"Lunch",desc:"150g chicken thigh + 150g cooked white rice + 150g frozen mixed veg. Soy sauce, garlic powder, black pepper.\nHome: pan-fry chicken 8 min each side, microwave veg 3 min. Office: prepped container.",macros:"~550 kcal  ·  45g protein  ·  52g carbs  ·  14g fat",color:"#1a6be8"},
+      {name:"Ninja Creami",desc:"Cottage cheese base — chocolate fudge, strawberry cheesecake, or vanilla banana. Spin on Lite Ice Cream. (See recipes below.)",macros:"~200–235 kcal  ·  25–27g protein",color:"#e84393"},
+      {name:"Dinner",desc:"150g chicken thigh + 200g boiled or roasted potato + 150g frozen mixed veg. Soy sauce or hot sauce.",macros:"~550 kcal  ·  42g protein  ·  52g carbs  ·  14g fat",color:"#e8531a"},
+    ].forEach(({name,desc,macros,color})=>{
+      el.appendChild(card(color,[
+        h("div",{style:{fontSize:"13px",fontWeight:"700",color:color,marginBottom:"3px"}},name),
+        h("div",{style:{fontSize:"12px",color:"#f0f0f0",lineHeight:"1.5",marginBottom:"4px"}},desc),
+        h("div",{style:{fontSize:"11px",color:"#555"}},macros),
+      ]));
+    });
+
+    el.appendChild(sectionLabel("Ninja Creami Recipes"));
+    el.appendChild(card("#555",h("div",{style:{fontSize:"11px",color:"#777",lineHeight:"1.5"}},"Blend smooth → pour into pint → freeze 24h+ → spin on Lite Ice Cream → re-spin once if crumbly.\nFreeze schedule: Sunday night (3 pints) · Wednesday night (3 pints) · Saturday night (1 pint).")));
+    [
+      {name:"Chocolate Fudge",macros:"~215 kcal  ·  27g protein  ·  13g carbs  ·  7g fat",color:"#6b3a1f",
+       ingredients:["150g full-fat cottage cheese","150ml full-cream milk","1.5 tbsp unsweetened cocoa powder","Stevia to taste (~10 drops)","Pinch of salt","½ tsp vanilla extract"],
+       tip:"The pinch of salt deepens the chocolate flavour — don't skip it."},
+      {name:"Strawberry Cheesecake",macros:"~200 kcal  ·  25g protein  ·  17g carbs  ·  6g fat",color:"#c0394b",
+       ingredients:["150g full-fat cottage cheese","150ml full-cream milk","80g frozen strawberries","Stevia to taste","1 tsp lemon juice","¼ tsp vanilla extract"],
+       tip:"Lemon juice cuts through the dairy and makes it taste genuinely like cheesecake."},
+      {name:"Vanilla Banana",macros:"~235 kcal  ·  26g protein  ·  24g carbs  ·  6g fat",color:"#b08a00",
+       ingredients:["150g full-fat cottage cheese","150ml full-cream milk","½ ripe banana (frozen, peeled)","1 tsp vanilla extract","Stevia to taste"],
+       tip:"The riper the banana, the less stevia you need."},
+    ].forEach(r=>{
+      el.appendChild(card(r.color,[
+        h("div",{style:{fontSize:"13px",fontWeight:"700",color:"#f0f0f0",marginBottom:"2px"}},r.name),
+        h("div",{style:{fontSize:"10px",color:"#888",fontFamily:"DM Mono,monospace",marginBottom:"8px"}},r.macros),
+        h("div",{style:{fontSize:"12px",color:"#bbb",lineHeight:"1.7"}},r.ingredients.join("\n")),
+        h("div",{style:{fontSize:"11px",color:"#888",fontStyle:"italic",marginTop:"6px",borderTop:"1px solid #333",paddingTop:"6px"}},`Tip: ${r.tip}`),
+      ]));
+    });
+
+    el.appendChild(sectionLabel("Sunday rest day — 1650 kcal"));
+    [
+      {name:"Breakfast",desc:"Same as training day but no banana. 80g oats + milk + Greek yoghurt + stevia/cinnamon.",macros:"~380 kcal  ·  28g protein  ·  47g carbs  ·  11g fat",color:"#1ab873"},
+      {name:"Lunch — Eating Out",desc:"~500–600 kcal, 35–45g protein. Grilled protein + veg/salad, sauce on the side, no soft drink.",macros:"Flexible",color:"#4ba3ff"},
+      {name:"Ninja Creami",desc:"Same as every day.",macros:"~200–235 kcal  ·  25–27g protein",color:"#e84393"},
+      {name:"Dinner",desc:"3 scrambled eggs + 1 can tuna (95g, drained) + 150g frozen mixed veg. Soy sauce or hot sauce.",macros:"~420 kcal  ·  48g protein  ·  8g carbs  ·  22g fat",color:"#e8531a"},
+    ].forEach(({name,desc,macros,color})=>{
+      el.appendChild(card(color,[
+        h("div",{style:{fontSize:"13px",fontWeight:"700",color:color,marginBottom:"3px"}},name),
+        h("div",{style:{fontSize:"12px",color:"#f0f0f0",lineHeight:"1.5",marginBottom:"4px"}},desc),
+        h("div",{style:{fontSize:"11px",color:"#555"}},macros),
+      ]));
+    });
+
+    el.appendChild(sectionLabel("Sunday lunch ordering guide"));
+    [
+      ["Cafe","Eggs + smoked salmon, big brekky (swap toast for extra eggs)","Pancakes, pastries, acai bowls"],
+      ["Pub / RSL","Grilled chicken or steak + salad/veg, sauce on side","Parmi + chips, battered fish, creamy pasta"],
+      ["Asian","Steamed rice + stir-fry protein, pho, sashimi","Sweet and sour, honey glazed, fried rice"],
+      ["Burgers","Grilled burger, extra patty over chips","Soft drink, thickshakes, loaded fries"],
+      ["Sushi","Nigiri, sashimi, edamame, miso soup. Max 8–10 pieces.","Tempura, teriyaki sauce, creamy rolls"],
+    ].forEach(([venue,order,avoid])=>{
+      el.appendChild(h("div",{style:{background:"#161616",border:"1px solid #222",borderRadius:"10px",padding:"10px 12px",marginBottom:"8px"}},[
+        h("div",{style:{fontSize:"12px",fontWeight:"700",color:"#f0f0f0",marginBottom:"4px"}},venue),
+        h("div",{style:{fontSize:"11px",color:"#1ab873",marginBottom:"2px"}},"✓ "+order),
+        h("div",{style:{fontSize:"11px",color:"#e85555"}},"✗ "+avoid),
+      ]));
+    });
+  }
+
+  return el;
+}
+
+function renderLog(){
+  const el=h("div",{style:{padding:"0 14px"}});
+  el.appendChild(h("div",{style:{padding:"16px 0 4px"}},[
+    h("div",{style:{fontFamily:"DM Mono,monospace",fontSize:"9px",color:"#1ab873",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:"4px"}},"Weekly Check-In"),
+    h("div",{style:{fontSize:"22px",fontWeight:"800",lineHeight:"1.1"}},"Log"),
+    h("div",{style:{fontSize:"22px",fontWeight:"800",color:"#1ab873",lineHeight:"1.1",marginBottom:"10px"}},"Progress"),
+  ]));
+
+  const scrollRow=h("div",{class:"scroll-row"});
+  WEEKS.forEach(w=>{
+    const hasData=!!state.entries[w.week]?.weight;
+    const btn=h("button",{
+      class:`week-pill${state.activeWeek===w.week?" active":""}${hasData&&state.activeWeek!==w.week?" done":""}`,
+      onClick:()=>{ state.activeWeek=w.week; render(); }
+    },[`Wk ${w.week}`, hasData&&state.activeWeek!==w.week?h("span",{style:{display:"inline-block",width:"5px",height:"5px",background:"#1ab873",borderRadius:"50%",marginLeft:"5px",verticalAlign:"middle"}}):null]);
+    scrollRow.appendChild(btn);
+  });
+  el.appendChild(scrollRow);
+
+  const w=WEEKS[state.activeWeek-1];
+  const e=state.entries[state.activeWeek];
+
+  // Week header
+  el.appendChild(h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"14px"}},[
+    h("div",{},[
+      h("div",{style:{fontSize:"18px",fontWeight:"800"}},[`Week ${w.week}`]),
+      h("div",{style:{fontSize:"11px",color:"#555"}},[`${w.date} · Target: `,h("span",{style:{color:"#1ab873"}},`${w.target}kg`)]),
+    ]),
+    e?.weight?h("div",{style:{fontSize:"26px",fontWeight:"800",color:parseFloat(e.weight)<=w.target?"#1ab873":"#e8531a"}},`${e.weight}kg`):h("div",{style:{fontSize:"13px",color:"#333"}},"Not logged"),
+  ]));
+
+  // Fields
+  const fields=[
+    {key:"weight",label:"Tuesday Weight",hint:`Target: ${w.target}kg`,placeholder:"e.g. 81.4",type:"number",color:"#e8531a"},
+    {key:"chinups",label:"Chin-ups (best set)",hint:"Baseline: 4",placeholder:"reps",type:"number",color:"#1a6be8"},
+    {key:"pushups",label:"Push-ups (best set)",hint:"Baseline: 15",placeholder:"reps",type:"number",color:"#1a6be8"},
+    {key:"deadHang",label:"Dead hang",hint:"seconds",placeholder:"e.g. 38",type:"number",color:"#1a6be8"},
+    {key:"dips",label:"Dips (best set)",hint:"reps",placeholder:"e.g. 14",type:"number",color:"#1a6be8"},
+    {key:"runKm",label:"Comfortable run distance",hint:"km",placeholder:"e.g. 3.2",type:"number",color:"#d4a017"},
+    {key:"runMin",label:"Run duration",hint:"minutes",placeholder:"e.g. 28",type:"number",color:"#d4a017"},
+    {key:"runEffort",label:"Effort (1–10)",hint:"1=walk, 10=max",placeholder:"e.g. 6",type:"number",color:"#d4a017"},
+  ];
+
+  // Auto pace
+  if(e?.runKm && e?.runMin && parseFloat(e.runKm)>0){
+    const pace=(parseFloat(e.runMin)/parseFloat(e.runKm)).toFixed(1);
+    el.appendChild(h("div",{style:{background:"#0f1a0f",border:"1px solid #1a3a1a",borderRadius:"8px",padding:"8px 12px",marginBottom:"10px",fontFamily:"DM Mono,monospace",fontSize:"11px",color:"#1ab873"}},[
+      `Avg pace: ${pace} min/km`,
+    ]));
+  }
+
+  fields.forEach(f=>{
+    const inp=h("input",{
+      type:f.type,class:"input",
+      placeholder:f.placeholder,
+      value:e?.[f.key]||"",
+      style:{borderColor:e?.[f.key]?f.color+"55":"#222"},
+    });
+    inp.addEventListener("input",ev=>{
+      state.entries[state.activeWeek][f.key]=ev.target.value;
+      if(state.saveTimer) clearTimeout(state.saveTimer);
+      state.saveTimer=setTimeout(()=>saveEntries(),600);
+      // Live pace update
+      if(f.key==="runKm"||f.key==="runMin") render();
+    });
+    el.appendChild(inputField(f.label,f.hint,inp));
+  });
+
+  // Shin pain
+  el.appendChild(h("div",{class:"field"},[
+    h("div",{class:"input-label"},"Shin pain during/after run?"),
+    h("div",{style:{display:"flex",gap:"8px"}},[
+      ...["no","yes"].map(v=>{
+        const active=e?.shinPain===v||(v==="no"&&!e?.shinPain);
+        const btn=h("button",{
+          style:{flex:"1",padding:"10px",borderRadius:"8px",fontSize:"13px",fontWeight:"700",
+            background:active?(v==="yes"?"#3a1a1a":"#0f1a0f"):"#111",
+            border:`1px solid ${active?(v==="yes"?"#e85555":"#1ab873"):"#222"}`,
+            color:active?(v==="yes"?"#e85555":"#1ab873"):"#555"},
+          onClick:()=>{ state.entries[state.activeWeek].shinPain=v; saveEntries(); render(); }
+        },v==="yes"?"Yes — pain":"No pain");
+        return btn;
+      }),
+    ]),
+  ]));
+
+  // Notes
+  const ta=h("textarea",{class:"input",placeholder:"How did the week feel? Any observations...",rows:"3",style:{resize:"none",lineHeight:"1.5"}});
+  ta.value=e?.notes||"";
+  ta.addEventListener("input",ev=>{ state.entries[state.activeWeek].notes=ev.target.value; if(state.saveTimer)clearTimeout(state.saveTimer); state.saveTimer=setTimeout(()=>saveEntries(),600); });
+  el.appendChild(inputField("Notes",null,ta));
+
+  // Nav
+  const nav=h("div",{style:{display:"flex",gap:"8px",marginTop:"8px"}});
+  if(state.activeWeek>1) nav.appendChild(h("button",{class:"btn-ghost",onClick:()=>{state.activeWeek--;render();}},`← Wk ${state.activeWeek-1}`));
+  if(state.activeWeek<8) nav.appendChild(h("button",{class:"btn-primary",style:{flex:"1"},onClick:()=>{state.activeWeek++;render();}},`Week ${state.activeWeek+1} →`));
+  el.appendChild(nav);
+
+  return el;
+}
+
+function renderProgress(){
+  const el=h("div",{style:{padding:"0 14px"}});
+  el.appendChild(h("div",{style:{padding:"16px 0 12px"}},[
+    h("div",{style:{fontFamily:"DM Mono,monospace",fontSize:"9px",color:"#1ab873",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:"4px"}},"Charts & Stats"),
+    h("div",{style:{fontSize:"22px",fontWeight:"800",lineHeight:"1.1"}},"Progress"),
+    h("div",{style:{fontSize:"22px",fontWeight:"800",color:"#1ab873",lineHeight:"1.1",marginBottom:"12px"}},"Overview"),
+  ]));
+
+  // Stats
+  const logged=WEEKS.filter(w=>state.entries[w.week]?.weight);
+  const last=logged.length>0?logged[logged.length-1]:null;
+  const cur=last?parseFloat(state.entries[last.week].weight):START_WEIGHT;
+  const lost=parseFloat((START_WEIGHT-cur).toFixed(1));
+  const rem=parseFloat((cur-TARGET).toFixed(1));
+  const pct=Math.max(0,Math.min(100,Math.round((lost/(START_WEIGHT-TARGET))*100)));
+
+  const stats=h("div",{class:"stat-grid"});
+  [{v:`${START_WEIGHT}kg`,l:"Start",c:"#555"},{v:`${cur}kg`,l:"Current",c:"#e8531a"},{v:`${TARGET}kg`,l:"Target",c:"#1ab873"}]
+    .forEach(s=>stats.appendChild(h("div",{class:"stat-card"},[
+      h("div",{class:"stat-value",style:{color:s.c}},s.v),
+      h("div",{class:"stat-label"},s.l),
+    ])));
+  el.appendChild(stats);
+
+  el.appendChild(h("div",{style:{marginBottom:"14px"}},[
+    h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:"5px"}},[
+      h("span",{style:{fontSize:"11px",color:"#555"}},["Lost: ",h("span",{style:{color:lost>0?"#1ab873":"#555"}},lost>0?`-${lost}kg`:"0kg")]),
+      h("span",{style:{fontSize:"11px",color:"#555"}},["Remaining: ",h("span",{style:{color:"#d4a017"}},rem>0?`${rem}kg`:"Goal reached!")]),
+    ]),
+    h("div",{class:"progress-track"},[
+      h("div",{class:"progress-fill",style:{width:`${pct}%`,background:`linear-gradient(90deg,#e8531a,#1ab873)`}}),
+    ]),
+    h("div",{style:{textAlign:"right",marginTop:"4px",fontFamily:"DM Mono,monospace",fontSize:"10px",color:pct>0?"#e8531a":"#333"}},`${pct}% to goal`),
+  ]));
+
+  el.appendChild(buildChart(state.entries));
+
+  // Pace chart
+  const paceData=WEEKS.map(w=>{
+    const e=state.entries[w.week];
+    if(e?.runKm&&e?.runMin&&parseFloat(e.runKm)>0){
+      return {week:w.week,pace:parseFloat((parseFloat(e.runMin)/parseFloat(e.runKm)).toFixed(2))};
+    }
+    return {week:w.week,pace:null};
+  }).filter(d=>d.pace!==null);
+
+  if(paceData.length>1){
+    el.appendChild(h("div",{style:{marginTop:"14px"}}));
+    el.appendChild(sectionLabel("Run pace trend (min/km — lower is faster)"));
+    el.appendChild(buildPaceChart(paceData));
+  }
+
+  // Linked log metrics
+  el.appendChild(h("div",{style:{marginTop:"14px"}}));
+  el.appendChild(sectionLabel("Log-linked strength & running"));
+  const metricCards=[
+    {label:"Chin-ups",key:"chinups",unit:" reps",color:"#1a6be8"},
+    {label:"Push-ups",key:"pushups",unit:" reps",color:"#e8531a"},
+    {label:"Dead hang",key:"deadHang",unit:" sec",color:"#1ab873"},
+    {label:"Dips",key:"dips",unit:" reps",color:"#d4a017"},
+    {label:"Comfortable run",key:"runKm",unit:" km",color:"#4ba3ff"},
+  ];
+  const metricGrid=h("div",{class:"tracker-grid"});
+  metricCards.forEach(function(metric){
+    const latest=getLatestMetric(metric.key);
+    const best=getBestMetric(metric.key);
+    metricGrid.appendChild(h("div",{class:"tracker-card"},[
+      h("div",{class:"tracker-value",style:{color:metric.color}},latest!=null?`${latest}${metric.unit}`:"-"),
+      h("div",{class:"stat-label",style:{marginTop:"8px"}},metric.label),
+      h("div",{class:"tracker-sub"},best!=null?`Best logged: ${best}${metric.unit}`:"No logged data yet"),
+    ]));
+  });
+  el.appendChild(metricGrid);
+
+  el.appendChild(sectionLabel("Weekly history"));
+  const history=h("div",{class:"history-list"});
+  WEEKS.forEach(function(w){
+    const entry=state.entries[w.week] || {};
+    if(!entry.weight && !entry.chinups && !entry.pushups && !entry.deadHang && !entry.dips && !entry.runKm) return;
+    history.appendChild(h("div",{class:"history-card"},[
+      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"8px"}},[
+        h("div",{style:{fontSize:"13px",fontWeight:"800"}},`Week ${w.week}`),
+        h("div",{style:{fontSize:"10px",color:"#666",fontFamily:"DM Mono,monospace"}},w.date),
+      ]),
+      h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"8px"}},[
+        h("div",{},[h("div",{class:"stat-label"},"Chin-ups"),h("div",{class:"history-value",style:{color:"#1a6be8"}},entry.chinups||"-")]),
+        h("div",{},[h("div",{class:"stat-label"},"Push-ups"),h("div",{class:"history-value",style:{color:"#e8531a"}},entry.pushups||"-")]),
+        h("div",{},[h("div",{class:"stat-label"},"Dead hang"),h("div",{class:"history-value",style:{color:"#1ab873"}},entry.deadHang?`${entry.deadHang}s`:"-")]),
+        h("div",{},[h("div",{class:"stat-label"},"Dips"),h("div",{class:"history-value",style:{color:"#d4a017"}},entry.dips||"-")]),
+        h("div",{},[h("div",{class:"stat-label"},"Comfortable run"),h("div",{class:"history-value",style:{color:"#4ba3ff"}},entry.runKm?`${entry.runKm} km`:"-")]),
+        h("div",{},[h("div",{class:"stat-label"},"Run pace"),h("div",{class:"history-value",style:{color:"#888"}},entry.runKm&&entry.runMin?`${(parseFloat(entry.runMin)/parseFloat(entry.runKm)).toFixed(1)} min/km`:"-")]),
+      ]),
+    ]));
+  });
+  if(!history.childNodes.length){
+    history.appendChild(card("#1ab873",h("div",{style:{fontSize:"12px",color:"#999",lineHeight:"1.5"}},"Add weekly log data and it will appear here automatically.")));
+  }
+  el.appendChild(history);
+
+  return el;
+}
+
+function renderNutrition(){
+  const el=h("div",{style:{padding:"0 14px"}});
+  const entry=getNutritionEntry(state.selectedDate);
+  const waterMl=parseInt(entry.waterMl,10) || 0;
+  const waterPct=Math.max(0,Math.min(100,Math.round((waterMl/DEFAULT_WATER_GOAL)*100)));
+
+  el.appendChild(h("div",{style:{padding:"16px 0 12px"}},[
+    h("div",{style:{fontFamily:"DM Mono,monospace",fontSize:"9px",color:"#4ba3ff",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:"4px"}},"Daily Nutrition"),
+    h("div",{style:{fontSize:"22px",fontWeight:"800",lineHeight:"1.1"}},"Food"),
+    h("div",{style:{fontSize:"22px",fontWeight:"800",color:"#4ba3ff",lineHeight:"1.1",marginBottom:"10px"}},"& Water"),
+  ]));
+
+  const dateInput=h("input",{class:"input",type:"date",value:state.selectedDate});
+  dateInput.addEventListener("input",ev=>{
+    state.selectedDate=ev.target.value||getTodayKey();
+    render();
+  });
+  el.appendChild(inputField("Day","saved locally",dateInput));
+
+  // Daily totals (auto-summed from per-meal macros)
+  const totals=dailyTotals(entry);
+  const calTarget=1800, proteinTarget=145;
+  const calPct=Math.max(0,Math.min(100,Math.round((totals.cal/calTarget)*100)));
+  const calColor=totals.cal>calTarget+100?"#e85555":totals.cal>=calTarget-100?"#1ab873":"#d4a017";
+
+  el.appendChild(sectionLabel("Daily totals"));
+  const macroSummary=h("div",{class:"macro-row"});
+  [
+    {v:totals.cal||"—",l:"Calories",c:calColor,sub:`/ ${calTarget}`},
+    {v:totals.p?(totals.p+"g"):"—",l:"Protein",c:totals.p>=proteinTarget?"#1ab873":"#e8531a",sub:"/ 145g"},
+    {v:totals.c?(totals.c+"g"):"—",l:"Carbs",c:"#1a6be8",sub:"/ 145g"},
+    {v:totals.f?(totals.f+"g"):"—",l:"Fat",c:"#d4a017",sub:"/ 60g"},
+  ].forEach(m=>{
+    macroSummary.appendChild(h("div",{class:"macro-chip"},[
+      h("div",{class:"macro-val",style:{color:m.c}},String(m.v)),
+      h("div",{class:"macro-lbl"},m.l),
+      h("div",{style:{fontSize:"9px",color:"#444",marginTop:"2px"}},m.sub),
+    ]));
+  });
+  el.appendChild(macroSummary);
+
+  if(totals.cal>0){
+    el.appendChild(h("div",{style:{marginBottom:"12px"}},[
+      h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:"4px"}},[
+        h("span",{style:{fontSize:"11px",color:"#555"}},"Calorie progress"),
+        h("span",{style:{fontSize:"11px",color:calColor}},`${calPct}% of target`),
+      ]),
+      h("div",{class:"progress-track"},[
+        h("div",{class:"progress-fill",style:{width:`${Math.min(100,calPct)}%`,background:`linear-gradient(90deg,#e8531a,${calColor})`}}),
+      ]),
+    ]));
+  }
+
+  // Water
+  el.appendChild(h("div",{style:{marginBottom:"6px"}},[
+    h("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:"4px"}},[
+      h("span",{style:{fontSize:"11px",color:"#555"}},`Water — ${waterMl} / ${DEFAULT_WATER_GOAL} ml`),
+      h("span",{style:{fontSize:"11px",color:"#4ba3ff"}},`${waterPct}%`),
+    ]),
+    h("div",{class:"progress-track"},[
+      h("div",{class:"progress-fill",style:{width:`${waterPct}%`,background:"linear-gradient(90deg,#4ba3ff,#1ab873)"}}),
+    ]),
+  ]));
+  const waterControls=h("div",{style:{display:"flex",gap:"8px",marginBottom:"16px"}});
+  waterControls.appendChild(h("button",{class:"btn-ghost",onClick:()=>{
+    entry.waterMl=Math.max(0,(parseInt(entry.waterMl,10)||0)-250);
+    saveNutrition(); render();
+  }},"-250 ml"));
+  waterControls.appendChild(h("button",{class:"btn-ghost",onClick:()=>{
+    entry.waterMl=(parseInt(entry.waterMl,10)||0)+250;
+    saveNutrition(); render();
+  }},"+250 ml"));
+  el.appendChild(waterControls);
+
+  // Per-meal logging
+  el.appendChild(sectionLabel("Meals"));
+
+  const mealDefs=[
+    {key:"breakfast",label:"Breakfast",color:"#1ab873",placeholder:"e.g. 80g oats, 200ml milk, 150g yoghurt, banana"},
+    {key:"lunch",label:"Lunch",color:"#1a6be8",placeholder:"e.g. 150g chicken, 150g rice, 150g frozen veg"},
+    {key:"creami",label:"Ninja Creami",color:"#e84393",placeholder:"e.g. Chocolate fudge pint"},
+    {key:"dinner",label:"Dinner",color:"#e8531a",placeholder:"e.g. 150g chicken, 200g potato, 150g veg"},
+    {key:"snacks",label:"Snacks / Other",color:"#4ba3ff",placeholder:"e.g. fruit, protein bar"},
+  ];
+
+  mealDefs.forEach(meal=>{
+    const prefix=meal.key;
+    const mealCal=mealCalc(entry,prefix);
+
+    const ta=h("textarea",{class:"input",rows:"2",placeholder:meal.placeholder,style:{resize:"none",lineHeight:"1.5",marginBottom:"8px"}});
+    ta.value=entry[prefix]||"";
+    ta.addEventListener("input",ev=>{ entry[prefix]=ev.target.value; saveNutrition(); });
+
+    const macroRow=h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:"6px"}});
+    [
+      {k:"Cal",hint:"kcal",ph:"e.g. 450",c:"#e8531a"},
+      {k:"Protein",hint:"g",ph:"e.g. 30",c:"#e8531a"},
+      {k:"Carbs",hint:"g",ph:"e.g. 62",c:"#1a6be8"},
+      {k:"Fat",hint:"g",ph:"e.g. 11",c:"#d4a017"},
+    ].forEach(macro=>{
+      const inp=h("input",{
+        class:"input",type:"number",
+        placeholder:macro.ph,
+        value:entry[prefix+macro.k]||"",
+        style:{fontSize:"13px",padding:"7px 8px",borderColor:entry[prefix+macro.k]?macro.c+"55":"#1e1e1e"}
+      });
+      inp.addEventListener("input",ev=>{
+        entry[prefix+macro.k]=ev.target.value;
+        saveNutrition();
+        render();
+      });
+      const lbl=h("div",{style:{fontFamily:"DM Mono,monospace",fontSize:"9px",color:"#444",marginBottom:"4px",textTransform:"uppercase",letterSpacing:"0.08em"}},macro.hint==="kcal"?"Cal (kcal)":macro.k+" ("+macro.hint+")");
+      macroRow.appendChild(h("div",{},[lbl,inp]));
+    });
+
+    const calBadge=mealCal>0
+      ? h("div",{style:{fontSize:"10px",color:"#888",fontFamily:"DM Mono,monospace",marginTop:"6px"}},`${mealCal} kcal`)
+      : null;
+
+    el.appendChild(h("div",{class:"meal-card",style:{borderLeft:`3px solid ${meal.color}`}},[
+      h("div",{style:{fontSize:"13px",fontWeight:"700",color:meal.color,marginBottom:"8px"}},meal.label),
+      ta,
+      h("div",{style:{fontSize:"10px",color:"#444",fontFamily:"DM Mono,monospace",marginBottom:"6px",textTransform:"uppercase",letterSpacing:"0.08em"}},"Macros"),
+      macroRow,
+      calBadge,
+    ]));
+  });
+
+  const notes=h("textarea",{class:"input",rows:"3",placeholder:"Energy, hunger, cravings, digestion, anything worth noting...",style:{resize:"none",lineHeight:"1.5"}});
+  notes.value=entry.notes||"";
+  notes.addEventListener("input",ev=>{
+    entry.notes=ev.target.value;
+    saveNutrition();
+  });
+  el.appendChild(inputField("Notes",null,notes));
+
+  return el;
+}
+
+function renderShopping(){
+  const el=h("div",{style:{padding:"0 14px"}});
+  const doneCount=state.shopping.filter(item=>item.done).length;
+
+  el.appendChild(h("div",{style:{padding:"16px 0 12px"}},[
+    h("div",{style:{fontFamily:"DM Mono,monospace",fontSize:"9px",color:"#d4a017",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:"4px"}},"Bottom Tab"),
+    h("div",{style:{fontSize:"22px",fontWeight:"800",lineHeight:"1.1"}},"Shopping"),
+    h("div",{style:{fontSize:"22px",fontWeight:"800",color:"#d4a017",lineHeight:"1.1",marginBottom:"10px"}},"List"),
+  ]));
+
+  const addRow=h("div",{class:"list-row",style:{marginBottom:"12px"}});
+  const input=h("input",{class:"input",placeholder:"Add grocery item",style:{flex:"1"}});
+  const addItem=function(){
+    const text=(input.value||"").trim();
+    if(!text) return;
+    state.shopping.unshift({id:`shop-${Date.now()}`,text:text,done:false});
+    input.value="";
+    saveShopping();
+    render();
+  };
+  const addBtn=h("button",{class:"btn-primary",style:{width:"auto",padding:"12px 16px"},onClick:addItem},"Add");
+  input.addEventListener("keydown",ev=>{
+    if(ev.key==="Enter"){
+      ev.preventDefault();
+      addItem();
+    }
+  });
+  addRow.appendChild(input);
+  addRow.appendChild(addBtn);
+  el.appendChild(addRow);
+
+  const controls=h("div",{style:{display:"flex",gap:"8px",marginBottom:"14px"}});
+  controls.appendChild(h("button",{class:"btn-ghost",onClick:()=>{
+    state.shopping=state.shopping.filter(item=>!item.done);
+    saveShopping();
+    render();
+  }},"Clear checked"));
+  controls.appendChild(h("button",{class:"btn-ghost",onClick:()=>{
+    state.shopping=defaultShoppingItems();
+    saveShopping();
+    render();
+  }},"Reset staples"));
+  el.appendChild(controls);
+
+  el.appendChild(card("#d4a017",[
+    h("div",{style:{fontSize:"13px",fontWeight:"700",color:"#d4a017",marginBottom:"3px"}},`${doneCount}/${state.shopping.length} picked up`),
+    h("div",{style:{fontSize:"12px",color:"#999",lineHeight:"1.5"}},"Tap an item to mark it done. The list is stored locally on this device."),
+  ]));
+
+  state.shopping.forEach(item=>{
+    el.appendChild(h("div",{class:`shopping-item${item.done?" done":""}`},[
+      h("button",{class:"shopping-check",onClick:()=>{
+        item.done=!item.done;
+        saveShopping();
+        render();
+      }},item.done?"✓":""),
+      h("button",{style:{flex:"1",textAlign:"left",background:"none",border:"none",color:"inherit"},onClick:()=>{
+        item.done=!item.done;
+        saveShopping();
+        render();
+      }},[
+        h("div",{class:"shopping-text",style:{fontSize:"14px",fontWeight:"700",color:"#f0f0f0",marginBottom:"2px"}},item.text),
+        h("div",{style:{fontSize:"11px",color:"#666"}},item.done?"Marked complete":"Tap to complete"),
+      ]),
+      h("button",{class:"tiny-btn",onClick:()=>{
+        state.shopping=state.shopping.filter(x=>x.id!==item.id);
+        saveShopping();
+        render();
+      }},"Delete"),
+    ]));
+  });
+
+  return el;
+}
+
+// ── Main render ────────────────────────────────────────────────────────────
+function redrawCharts(){
+  const app=document.getElementById("app");
+  if(!app) return;
+  var all = app.getElementsByTagName("*");
+  for(var i=0;i<all.length;i++){
+    if(all[i]._drawFn) all[i]._drawFn();
+  }
+}
+
+function render(){
+  const app=document.getElementById("app");
+  app.innerHTML="";
+
+  const content=h("div",{});
+  if(state.tab==="today") content.appendChild(renderToday());
+  else if(state.tab==="log") content.appendChild(renderLog());
+  else if(state.tab==="progress") content.appendChild(renderProgress());
+  else if(state.tab==="nutrition") content.appendChild(renderNutrition());
+  else if(state.tab==="shopping") content.appendChild(renderShopping());
+  app.appendChild(content);
+
+  // Draw charts after DOM is painted
+  requestAnimationFrame(function(){
+    redrawCharts();
+  });
+
+  // Nav
+  const nav=h("nav",{class:"nav"});
+  [
+    {id:"today",icon:"🏋️",label:"Plan"},
+    {id:"log",icon:"📝",label:"Log"},
+    {id:"progress",icon:"📈",label:"Progress"},
+    {id:"nutrition",icon:"🥗",label:"Food"},
+    {id:"shopping",icon:"🛒",label:"Shop"},
+  ].forEach(n=>{
+    const btn=h("button",{class:`nav-btn${state.tab===n.id?" active":""}`,
+      onClick:()=>{ state.tab=n.id; render(); }},[
+      h("span",{class:"nav-icon"},n.icon),
+      n.label,
+    ]);
+    nav.appendChild(btn);
+  });
+  app.appendChild(nav);
+}
+
+render();
+window.addEventListener("resize", redrawCharts);
+
+// Register service worker
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+</script>
 </body>
 </html>
